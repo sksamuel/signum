@@ -11,5 +11,7 @@ class ScapedotPlugin extends StandardPlugin:
   val name: String = "scapedot"
   override val description: String = "scapedot static code analysis"
 
-  def init(options: List[String]): List[PluginPhase] =
+  def init(options: List[String]): List[PluginPhase] = {
+    println("Creating plugin")
     (new ScapedotPluginPhase) :: Nil
+  }
