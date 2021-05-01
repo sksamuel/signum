@@ -1,2 +1,26 @@
 *.class
 *.log
+
+# sbt specific
+dist/*
+target/
+/target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+credentials.sbt
+
+# Scala-IDE specific
+.scala_dependencies
+.idea
+.ensime
+.ensime_cache
+target
+
+# metals
+.bloop
+.metals
+metals.sbt
+
+.bsp
