@@ -13,6 +13,6 @@ class BoundedByFinalType extends Inspection {
 
     import tpd.*
 
-    override def continue(tree: Tree): Unit = {}
+    override def inspect(tree: Tree): Unit = {}
   }
 }

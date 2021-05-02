@@ -12,5 +12,5 @@ trait Inspection {
 
 trait Inspector {
   import tpd.*
-  def continue(tree: Tree): Unit
+  def inspect(tree: Tree): Unit
 }
