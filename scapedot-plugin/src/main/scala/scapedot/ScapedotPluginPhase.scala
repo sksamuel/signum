@@ -1,10 +1,10 @@
-package com.sksamuel.scapedot
+package scapedot
 
+import dotty.tools.dotc.ast.{Trees, tpd}
 import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.transform.{Pickler, Staging}
-import dotty.tools.dotc.ast.{Trees, tpd}
 
 class ScapedotPluginPhase extends PluginPhase :
 

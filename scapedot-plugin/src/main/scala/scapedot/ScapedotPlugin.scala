@@ -1,4 +1,4 @@
-package com.sksamuel.scapedot
+package scapedot
 
 import dotty.tools.dotc.ast.{Trees, tpd}
 import dotty.tools.dotc.core.Constants.Constant

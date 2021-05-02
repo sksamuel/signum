@@ -1,6 +1,6 @@
-package com.sksamuel.scapedot.inspections.types
+package scapedot.inspections.types
 
-import com.sksamuel.scapedot.{Inspection, Inspector, Level}
+import scapedot.{Inspection, Inspector, Level}
 import dotty.tools.dotc.ast.tpd
 
 class BoundedByFinalType extends Inspection {

@@ -1,4 +1,4 @@
-package com.sksamuel.scapedot
+package scapedot
 
 /**
  * Indicates the severity level of an inspection.

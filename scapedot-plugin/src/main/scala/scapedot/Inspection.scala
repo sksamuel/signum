@@ -1,6 +1,6 @@
-package com.sksamuel.scapedot
+package scapedot
 
-import com.sksamuel.scapedot.Level
+import scapedot.Level
 import dotty.tools.dotc.ast.{Trees, tpd}
 
 trait Inspection {
@@ -11,8 +11,6 @@ trait Inspection {
 }
 
 trait Inspector {
-
   import tpd.*
-
   def continue(tree: Tree): Unit
 }
