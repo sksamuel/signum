@@ -6,6 +6,7 @@ def ossrhUsername = sys.env.getOrElse("OSSRH_USERNAME", "")
 def ossrhPassword = sys.env.getOrElse("OSSRH_PASSWORD", "")
 def publishVersion = if (isRelease) releaseVersion else if (isGithubActions) "0.10.0" + githubRunNumber + "-SNAPSHOT" else "0.0.0-LOCAL"
 
+
 val ScalaVersion = "3.0.0-RC3"
 val ScalatestVersion = "3.2.8"
 
@@ -20,6 +21,10 @@ lazy val commonSettings = Seq(
   version := publishVersion,
   resolvers ++= Seq(Resolver.mavenLocal),
   parallelExecution in Test := false,
+  fork in Test := true,
+  initialize := {
+    System.setProperty("SCAPEDOT_SCALA_VERSION", ScalaVersion)
+  },
   scalacOptions in(Compile, doc) := (scalacOptions in(Compile, doc)).value.filter(_ != "-Xfatal-warnings"),
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 )

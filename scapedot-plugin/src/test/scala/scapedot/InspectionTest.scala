@@ -28,44 +28,49 @@ def writeCodeSnippetToTempFile(code: String): File = {
   file
 }
 
-/**
- * Locates a jar inside the users Ivy cache.
- */
-def findIvyJar(groupId: String, artifactId: String, version: String): File = {
-  val userHome = System.getProperty("user.home")
-  val sbtHome = userHome + "/.ivy2"
-  val jarPath =
-    sbtHome + "/cache/" + groupId + "/" + artifactId + "/jars/" + artifactId + "-" + version + ".jar"
-  val file = new File(jarPath)
-  if (file.exists) file
-  else throw new FileNotFoundException(s"Could not locate [$jarPath].")
-}
+///**
+// * Locates a jar inside the users Ivy cache.
+// */
+//def findIvyJar(groupId: String, artifactId: String, version: String): File = {
+//  val userHome = System.getProperty("user.home")
+//  val sbtHome = userHome + "/.ivy2"
+//  val jarPath =
+//    sbtHome + "/cache/" + groupId + "/" + artifactId + "/jars/" + artifactId + "-" + version + ".jar"
+//  val file = new File(jarPath)
+//  if (file.exists) file
+//  else throw new FileNotFoundException(s"Could not locate [$jarPath].")
+//}
+
+// used to find the compiled files
+def scalaVersion = sys.props.getOrElse("SCAPEDOT_SCALA_VERSION", "scala-3.0.0-RC3")
 
 def compileClassPath =
   val target = Paths.get("target/")
-  val classpath = target.toAbsolutePath.toString + "/scala-3.0.0-RC3"
+  val classpath = target.toAbsolutePath.toString + s"/$scalaVersion/classes/"
   new File(classpath)
 
-def findLocalIvyJar(groupId: String, artifactId: String, version: String): File =
-  val userHome = System.getProperty("user.home")
-  val ivyHome = userHome + "/.ivy2"
-  // eg /home/sam/.ivy2/local/com.sksamuel.scapedot/scapedot-plugin_3.0.0-RC3/0.0.0-LOCAL/jars/scapedot-plugin_3.0.0-RC3.jar
-  val jarPath = ivyHome + "/local/" + groupId + "/" + artifactId + "/" + version + "/jars/" + artifactId + ".jar"
-  val file = new File(jarPath)
-  if (file.exists) file
-  else throw new FileNotFoundException(s"Could not locate [$jarPath].")
+//def findLocalIvyJar(groupId: String, artifactId: String, version: String): File =
+//  val userHome = System.getProperty("user.home")
+//  val ivyHome = userHome + "/.ivy2"
+//  // eg /home/sam/.ivy2/local/com.sksamuel.scapedot/scapedot-plugin_3.0.0-RC3/0.0.0-LOCAL/jars/scapedot-plugin_3.0.0-RC3.jar
+//  val jarPath = ivyHome + "/local/" + groupId + "/" + artifactId + "/" + version + "/jars/" + artifactId + ".jar"
+//  val file = new File(jarPath)
+//  if (file.exists) file
+//  else throw new FileNotFoundException(s"Could not locate [$jarPath].")
 
 abstract class InspectionTest extends AnyFreeSpec with Matchers with OneInstancePerTest :
+
   def inspections: Seq[Inspection]
+
   def compileCodeSnippet(snippet: String): Unit =
-    val compiler = new Compiler()
-    val pluginJar = findLocalIvyJar("com.sksamuel.scapedot", "scapedot-plugin_3.0.0-RC3", "0.0.0-LOCAL")
-    println(pluginJar)
-    val reporter = new ConsoleReporter()
+
     val file = writeCodeSnippetToTempFile(snippet)
     val sources = List(file.getPath)
-    val out = Paths.get("out2/").toAbsolutePath()
+
+    val out = Paths.get("out/").toAbsolutePath()
     if (Files.notExists(out))
       Files.createDirectory(out)
-    val args = sources ++ List("-d", out.toString, "-classpath", "", "-usejavacp", s"-Xplugin:$pluginJar")
+
+    val args = sources ++ List("-d", out.toString, "-classpath", "", "-usejavacp", s"-Xplugin:$compileClassPath")
+    val reporter = new ConsoleReporter()
     ScapedotDriver.process(args.toArray, reporter)

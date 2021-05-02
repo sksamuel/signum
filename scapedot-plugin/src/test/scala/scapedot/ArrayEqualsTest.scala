@@ -33,17 +33,6 @@ class ArrayEqualsTest extends InspectionTest {
       }
     }
     "should not report warning" - {
-      "for comparing two arrays using deep" in {
-
-        val code = """class Test {
-                     val a = Array(1,2,3)
-                     val b = Array(1,2,3)
-                     println(a.deep == b.deep)
-                    } """.stripMargin
-
-        compileCodeSnippet(code)
-//        compiler.scapegoat.feedback.warnings.size shouldBe 0
-      }
       "for comparing an array to null" in {
 
         val code = """class Test {
