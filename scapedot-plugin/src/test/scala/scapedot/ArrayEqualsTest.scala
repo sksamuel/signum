@@ -16,9 +16,7 @@ class ArrayEqualsTest extends InspectionTest {
                      println(a == b)
                     } """.stripMargin
 
-
-
-//        compileCodeSnippet(code)
+        compileCodeSnippet(code)
 //        compiler.scapegoat.feedback.warnings.size shouldBe 1
       }
 
@@ -30,7 +28,7 @@ class ArrayEqualsTest extends InspectionTest {
                      println(a != b)
                     } """.stripMargin
 
-//        compileCodeSnippet(code)
+        compileCodeSnippet(code)
 //        compiler.scapegoat.feedback.warnings.size shouldBe 1
       }
     }
@@ -43,7 +41,7 @@ class ArrayEqualsTest extends InspectionTest {
                      println(a.deep == b.deep)
                     } """.stripMargin
 
-//        compileCodeSnippet(code)
+        compileCodeSnippet(code)
 //        compiler.scapegoat.feedback.warnings.size shouldBe 0
       }
       "for comparing an array to null" in {
@@ -54,12 +52,12 @@ class ArrayEqualsTest extends InspectionTest {
                      println(a == null)
                     } """.stripMargin
 
-//        compileCodeSnippet(code)
+        compileCodeSnippet(code)
 //        compiler.scapegoat.feedback.warnings.size shouldBe 0
       }
       "for arrays parameters to a case class" in {
         val code = """case class Foo(name: String, rules: Array[String])"""
-//        compileCodeSnippet(code)
+        compileCodeSnippet(code)
 //        compiler.scapegoat.feedback.warnings.size shouldBe 0
       }
     }

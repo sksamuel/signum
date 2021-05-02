@@ -23,7 +23,7 @@ class ScapedotPluginPhase extends PluginPhase :
 
   override def transformUnit(tree: tpd.Tree)(using context: Context): tpd.Tree =
     println(s"Transform unit $tree")
-    ScapedotTraverser.traverse(tree)
+    //ScapedotTraverser.traverse(tree)
     super.transformUnit(tree)
 
 end ScapedotPluginPhase
