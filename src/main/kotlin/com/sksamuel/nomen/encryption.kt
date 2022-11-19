@@ -2,6 +2,9 @@ package com.sksamuel.nomen
 
 import java.nio.ByteBuffer
 
+/**
+ * Models a Base-64 encoded byte array.
+ */
 @JvmInline
 value class Base64(val value: String)
 
