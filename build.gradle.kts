@@ -42,3 +42,5 @@ allprojects {
       kotlinOptions.jvmTarget = "11"
    }
 }
+
+apply("./publish.gradle.kts")
