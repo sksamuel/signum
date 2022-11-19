@@ -1,26 +1,15 @@
 *.class
 *.log
+.idea
+*.iml
+.kotlintest
 
-# sbt specific
-dist/*
 target/
-/target/
+build/
+out/
 lib_managed/
 src_managed/
 project/boot/
 project/plugins/project/
 credentials.sbt
-
-# Scala-IDE specific
-.scala_dependencies
-.idea
-.ensime
-.ensime_cache
-target
-
-# metals
-.bloop
-.metals
-metals.sbt
-
-.bsp
+.gradle

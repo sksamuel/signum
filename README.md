@@ -1,2 +1,3 @@
-# scapedot
-Experiments with porting scapegoat to dotty
+# nomen
+
+Library of Kotlin value types.
