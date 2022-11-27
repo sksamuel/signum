@@ -1,3 +1,3 @@
-# nomen
+# quaestor
 
-Library of Kotlin value types.
+Filling in the missing gaps in Micrometer based metrics.
