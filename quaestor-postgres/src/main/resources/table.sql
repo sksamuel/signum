@@ -2,7 +2,6 @@
 select oid,
        u.schemaname,
        c.relname,
-       last_autovacuum,
        n_live_tup,          -- Estimated number of live rows
        n_dead_tup,          -- Estimated number of dead rows
        n_tup_ins,           -- Number of rows inserted
@@ -15,8 +14,6 @@ select oid,
        idx_tup_fetch,       -- Number of live rows fetched by index scans
        n_tup_upd,           -- Number of rows updated (includes HOT updated rows)
        n_tup_hot_upd,       -- Number of rows HOT updated
-       autovacuum_count,
-       autoanalyze_count,
        pg_relation_size(oid, 'vm')  as visibility_map,
        pg_relation_size(oid, 'fsm') as free_space_map,
        pg_table_size(oid)           as table_size,

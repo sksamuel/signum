@@ -1,4 +1,5 @@
-select last_autovacuum,
+select relname,
+       last_autovacuum,
        autovacuum_count,
        autoanalyze_count
 from pg_stat_user_tables

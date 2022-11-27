@@ -2,7 +2,6 @@
 
 package com.sksamuel.quaestor.postgres
 
-import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
 import kotlinx.coroutines.Dispatchers
@@ -12,32 +11,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 
-class TableSizeMetrics(
+class TupleSizeMetrics(
    ds: DataSource,
    private val relname: String,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/tuple_counts.sql").bufferedReader().readText()
-
-   private fun relnameGauge(name: String, description: String, registry: MeterRegistry): (String) -> AtomicLong {
-      val gauges = ConcurrentHashMap<String, AtomicLong>()
-      return { relname ->
-         gauges.getOrPut(relname) {
-            AtomicLong(0).also {
-               Gauge
-                  .builder(name) { it }
-                  .description(description)
-                  .tag("relname", relname)
-                  .register(registry)
-            }
-         }
-      }
-   }
 
    override fun bindTo(registry: MeterRegistry) {
 
