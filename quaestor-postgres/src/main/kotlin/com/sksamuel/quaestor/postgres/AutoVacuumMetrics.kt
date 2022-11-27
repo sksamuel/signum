@@ -18,7 +18,7 @@ import kotlin.coroutines.coroutineContext
 
 class AutoVacuumMetrics(
    private val ds: DataSource,
-   private val relname: String
+   private val relname: String,
 ) : MeterBinder {
 
    override fun bindTo(registry: MeterRegistry) {
