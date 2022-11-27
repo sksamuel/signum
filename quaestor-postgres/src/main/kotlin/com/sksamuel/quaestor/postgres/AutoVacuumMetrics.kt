@@ -22,10 +22,19 @@ class AutoVacuumMetrics(
 ) : MeterBinder {
 
    override fun bindTo(registry: MeterRegistry) {
+
       val autovacuumCount = AtomicLong(0).also {
          Gauge
             .builder("quaestor.postgres.autovacuum_count") { it }
             .description("Total number of autovacuums on this relation")
+            .tag("relname", relname)
+            .register(registry)
+      }
+
+      val autoanalyzeCount = AtomicLong(0).also {
+         Gauge
+            .builder("quaestor.postgres.autoanalyze_count") { it }
+            .description("Total number of auto analyzes on this relation")
             .tag("relname", relname)
             .register(registry)
       }
@@ -39,7 +48,7 @@ class AutoVacuumMetrics(
       }
 
       GlobalScope.launch {
-         AutoVacuumTask(ds, relname, autovacuumCount, lastAutovacuumTimestamp).start()
+         AutoVacuumTask(ds, relname, autovacuumCount, autoanalyzeCount, lastAutovacuumTimestamp).start()
       }
    }
 }
@@ -48,7 +57,8 @@ class AutoVacuumTask(
    ds: DataSource,
    private val relname: String,
    private val autovacuumCount: AtomicLong,
-   private val lastAutovacuumGauge: AtomicLong,
+   private val autoanalyzeCount: AtomicLong,
+   private val lastAutovacuumTimestamp: AtomicLong,
 ) {
 
    private val template = NamedParameterJdbcTemplate(ds)
@@ -62,12 +72,9 @@ class AutoVacuumTask(
                   query,
                   MapSqlParameterSource(mapOf("relname" to relname))
                ) { rs ->
-
-                  val count = rs.getLong("autovacuum_count")
-                  autovacuumCount.set(count)
-
-                  val ts = rs.getTimestamp("last_autovacuum")
-                  lastAutovacuumGauge.set(ts.time)
+                  autovacuumCount.set(rs.getLong("autovacuum_count"))
+                  autoanalyzeCount.set(rs.getLong("autoanalyze_count"))
+                  lastAutovacuumTimestamp.set(rs.getTimestamp("last_autovacuum").time)
                }
             }
          }
