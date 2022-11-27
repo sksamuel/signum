@@ -1,0 +1,63 @@
+@file:Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "OPT_IN_USAGE")
+
+package com.sksamuel.quaestor.postgres
+
+import io.micrometer.core.instrument.Gauge
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.binder.MeterBinder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import java.util.concurrent.atomic.AtomicLong
+import javax.sql.DataSource
+
+class LockMetrics(
+   ds: DataSource,
+   private val relname: String,
+) : MeterBinder {
+
+   private val template = NamedParameterJdbcTemplate(ds)
+   private val query = javaClass.getResourceAsStream("/fast_path_locks.sql").bufferedReader().readText()
+
+   override fun bindTo(registry: MeterRegistry) {
+
+      val fastPathLocks = AtomicLong(0).also {
+         Gauge
+            .builder("quaestor.postgres.locks.fastpath") { it }
+            .description("The total number of fastpath locks")
+            .tag("relname", relname)
+            .tag("fastpath", "true")
+            .register(registry)
+      }
+
+      val nonFastPathLocks = AtomicLong(0).also {
+         Gauge
+            .builder("quaestor.postgres.locks.fastpath") { it }
+            .description("The total number of non-fastpath locks")
+            .tag("relname", relname)
+            .tag("fastpath", "false")
+            .register(registry)
+      }
+
+      GlobalScope.launch {
+         while (isActive) {
+            runCatching {
+               runInterruptible(Dispatchers.IO) {
+                  template.query(
+                     query,
+                     MapSqlParameterSource(mapOf("relname" to relname))
+                  ) { rs ->
+                     val fastpath = rs.getBoolean("fastpath")
+                     val count = rs.getLong("count")
+                     if (fastpath) fastPathLocks.set(count) else nonFastPathLocks.set(count)
+                  }
+               }
+            }
+         }
+      }
+   }
+}
