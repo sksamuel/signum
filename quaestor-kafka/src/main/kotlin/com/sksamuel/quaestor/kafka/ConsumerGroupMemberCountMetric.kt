@@ -1,6 +1,6 @@
 package com.sksamuel.quaestor.kafka
 
-import com.sksamuel.micrometer.kafka.clients.ConsumerGroupClient
+import com.sksamuel.quaestor.kafka.clients.ConsumerGroupClient
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.ImmutableTag
 import io.micrometer.core.instrument.MeterRegistry

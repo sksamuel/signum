@@ -1,4 +1,4 @@
-package com.sksamuel.micrometer.kafka.clients
+package com.sksamuel.quaestor.kafka.clients
 
 import kotlinx.coroutines.future.await
 import org.apache.kafka.clients.admin.AdminClient

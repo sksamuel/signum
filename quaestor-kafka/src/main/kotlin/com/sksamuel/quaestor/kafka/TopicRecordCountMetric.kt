@@ -1,7 +1,7 @@
 package com.sksamuel.quaestor.kafka
 
-import com.sksamuel.micrometer.kafka.clients.OffsetsClient
-import com.sksamuel.micrometer.kafka.clients.TopicPartitionOffsets
+import com.sksamuel.quaestor.kafka.clients.OffsetsClient
+import com.sksamuel.quaestor.kafka.clients.TopicPartitionOffsets
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.ImmutableTag
 import io.micrometer.core.instrument.MeterRegistry

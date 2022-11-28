@@ -1,7 +1,7 @@
 package com.sksamuel.quaestor.kafka
 
-import com.sksamuel.micrometer.kafka.clients.TopicClient
-import com.sksamuel.micrometer.kafka.clients.TopicPartitionInsync
+import com.sksamuel.quaestor.kafka.clients.TopicClient
+import com.sksamuel.quaestor.kafka.clients.TopicPartitionInsync
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.ImmutableTag
 import io.micrometer.core.instrument.MeterRegistry
