@@ -34,7 +34,7 @@ class TopicRecordCountMetric(
 ) : MeterBinder, AutoCloseable {
 
    companion object {
-      const val MetricName = "kafka.topic.records.count"
+      const val MetricName = "quaestor.kafka.topic.records.count"
       const val MetricDescription = "Kafka topic estimated record count"
    }
 

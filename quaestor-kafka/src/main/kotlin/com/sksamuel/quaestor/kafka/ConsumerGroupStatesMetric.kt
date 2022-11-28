@@ -37,7 +37,7 @@ class ConsumerGroupStatesMetric(
    ) : this(consumerGroupIds, emptySet(), interval, createClientFn)
 
    companion object {
-      const val MetricName = "kafka.consumer.group.states"
+      const val MetricName = "quaestor.kafka.consumer.group.states"
       const val MetricDescription = "Kafka consumer group states count"
    }
 

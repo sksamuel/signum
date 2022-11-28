@@ -31,7 +31,7 @@ class ConsumerGroupMemberCountMetric(
 ) : MeterBinder, AutoCloseable {
 
    companion object {
-      const val MetricName = "kafka.consumer.group.members"
+      const val MetricName = "quaestor.kafka.consumer.group.members"
       const val MetricDescription = "Kafka consumer group member count"
    }
 

@@ -37,7 +37,7 @@ class TopicRetentionMetric(
    ) : this(topics, emptySet(), interval, createClientFn)
 
    companion object {
-      const val MetricName = "kafka.topic.retention"
+      const val MetricName = "quaestor.kafka.topic.retention"
       const val MetricDescription = "Kafka topic retention time in milliseconds"
    }
 
