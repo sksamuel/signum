@@ -1,5 +1,5 @@
 dependencies {
-   implementation("org.springframework:spring-jdbc:5.3.23")
+   implementation("org.springframework:spring-jdbc:6.0.0")
 }
 
 apply("../publish.gradle.kts")
