@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import mu.KotlinLogging
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.util.concurrent.atomic.AtomicLong
@@ -24,6 +25,7 @@ class LockMetrics(
    private val interval: Duration = 1.minutes,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/fast_path_locks.sql").bufferedReader().readText()
 
@@ -61,7 +63,7 @@ class LockMetrics(
                      if (fastpath) fastPathLocks.set(count) else nonFastPathLocks.set(count)
                   }
                }
-            }
+            }.onFailure { logger.warn(it) { "Error fetching lock metrics" } }
          }
       }
    }

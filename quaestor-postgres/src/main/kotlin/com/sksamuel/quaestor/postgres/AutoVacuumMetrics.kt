@@ -10,9 +10,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import mu.KotlinLogging
 import org.springframework.jdbc.core.namedparam.EmptySqlParameterSource
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -32,13 +34,14 @@ class AutoVacuumMetrics(
    private val interval: Duration = 1.minutes,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/autovacuum.sql").bufferedReader().readText()
    private val queryGrouped = javaClass.getResourceAsStream("/autovacuum_grouped.sql").bufferedReader().readText()
 
    override fun bindTo(registry: MeterRegistry) {
 
-      val autovacuumCounts = relnameGauge(
+      val autovacuumCounts: (String) -> AtomicLong = relnameGauge(
          "quaestor.postgres.autovacuum_count",
          "Total number of autovacuums on this relation",
          registry
@@ -71,7 +74,7 @@ class AutoVacuumMetrics(
                      lastAutovacuumTimestamps(r).set(rs.getTimestamp("last_autovacuum").time)
                   }
                }
-            }
+            }.onFailure { logger.warn(it) { "Error fetching auto vacuum metrics" } }
          }
       }
    }

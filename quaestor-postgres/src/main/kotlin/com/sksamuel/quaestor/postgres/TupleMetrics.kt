@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import mu.KotlinLogging
 import org.springframework.jdbc.core.namedparam.EmptySqlParameterSource
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -24,6 +25,7 @@ class TupleMetrics(
    private val interval: Duration = 1.minutes,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/tuples.sql").bufferedReader().readText()
    private val queryGrouped = javaClass.getResourceAsStream("/tuples_grouped.sql").bufferedReader().readText()
@@ -95,7 +97,7 @@ class TupleMetrics(
                      seqTupRead(relname).set(rs.getLong("seq_tup_read"))
                   }
                }
-            }
+            }.onFailure { logger.warn(it) { "Error fetching tuple metrics" } }
          }
       }
    }
