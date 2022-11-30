@@ -40,7 +40,7 @@ class AutoVacuumMetrics(
 
    override fun bindTo(registry: MeterRegistry) {
 
-      val autovacuumCounts: (String) -> AtomicLong = relnameGauge(
+      val autovacuumCounts = relnameGauge(
          "quaestor.postgres.autovacuum_count",
          "Total number of autovacuums on this relation",
          registry
