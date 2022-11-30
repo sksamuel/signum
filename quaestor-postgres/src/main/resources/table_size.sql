@@ -7,4 +7,4 @@ select oid,
        pg_table_size(oid)            as pg_table_size,
        pg_total_relation_size(oid)   as pg_total_relation_size
 from pg_stat_user_tables
-WHERE relname like :relanme
+WHERE relname like :relname
