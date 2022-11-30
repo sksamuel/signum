@@ -68,6 +68,7 @@ class AutoVacuumMetrics(
                      MapSqlParameterSource(mapOf("relname" to relname)),
                   ) { rs ->
                      val r = if (grouped) relname else rs.getString("relname")
+                     logger.info("For rel $r autovacuum_count= " + rs.getLong("autovacuum_count"))
                      autovacuumCounts(r).set(rs.getLong("autovacuum_count"))
                      autoanalyzeCounts(r).set(rs.getLong("autoanalyze_count"))
                      lastAutovacuumTimestamps(r).set(rs.getTimestamp("last_autovacuum")?.time ?: 0)

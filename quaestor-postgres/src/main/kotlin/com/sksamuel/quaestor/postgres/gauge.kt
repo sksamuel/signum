@@ -15,7 +15,7 @@ internal fun relnameGauge(
    val gauges = ConcurrentHashMap<String, AtomicLong>()
    return { relname ->
       gauges.getOrPut(relname) {
-         AtomicLong(0).also {
+         AtomicLong(0L).also {
             Gauge
                .builder(name) { it }
                .description(description)
