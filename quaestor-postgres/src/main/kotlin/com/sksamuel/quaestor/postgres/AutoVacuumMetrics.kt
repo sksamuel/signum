@@ -70,7 +70,7 @@ class AutoVacuumMetrics(
                      val r = if (grouped) relname else rs.getString("relname")
                      autovacuumCounts(r).set(rs.getLong("autovacuum_count"))
                      autoanalyzeCounts(r).set(rs.getLong("autoanalyze_count"))
-                     lastAutovacuumTimestamps(r).set(rs.getTimestamp("last_autovacuum").time)
+                     lastAutovacuumTimestamps(r).set(rs.getTimestamp("last_autovacuum")?.time ?: 0)
                   }
                }
             }.onFailure { logger.warn(it) { "Error fetching auto vacuum metrics" } }
