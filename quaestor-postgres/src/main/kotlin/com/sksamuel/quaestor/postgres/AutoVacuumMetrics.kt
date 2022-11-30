@@ -57,6 +57,12 @@ class AutoVacuumMetrics(
          registry
       )
 
+      val lastAutoanalyzeTimestamps = relnameGauge(
+         "quaestor.postgres.last_autoanalyze",
+         "Timestamp in millis of when the last autoanalyze occured",
+         registry
+      )
+
       GlobalScope.launch {
          while (isActive) {
             runCatching {
@@ -70,6 +76,7 @@ class AutoVacuumMetrics(
                      autovacuumCounts(r).set(rs.getLong("autovacuum_count"))
                      autoanalyzeCounts(r).set(rs.getLong("autoanalyze_count"))
                      lastAutovacuumTimestamps(r).set(rs.getTimestamp("last_autovacuum")?.time ?: 0)
+                     lastAutoanalyzeTimestamps(r).set(rs.getTimestamp("last_autoanalyze")?.time ?: 0)
                   }
                }
             }.onFailure { logger.warn(it) { "Error fetching auto vacuum metrics" } }
