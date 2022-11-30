@@ -10,6 +10,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import org.springframework.jdbc.core.namedparam.EmptySqlParameterSource
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
@@ -19,11 +20,13 @@ import kotlin.time.Duration.Companion.minutes
 class TupleMetrics(
    ds: DataSource,
    private val relname: String,
+   private val grouped: Boolean = true,
    private val interval: Duration = 1.minutes,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
-   private val query = javaClass.getResourceAsStream("/rowops.sql").bufferedReader().readText()
+   private val query = javaClass.getResourceAsStream("/tuples.sql").bufferedReader().readText()
+   private val queryGrouped = javaClass.getResourceAsStream("/tuples_grouped.sql").bufferedReader().readText()
 
    override fun bindTo(registry: MeterRegistry) {
 
@@ -71,8 +74,8 @@ class TupleMetrics(
                delay(interval)
                runInterruptible(Dispatchers.IO) {
                   template.query(
-                     query,
-                     MapSqlParameterSource(mapOf("relname" to relname))
+                     if (grouped) queryGrouped else query,
+                     if (grouped) EmptySqlParameterSource() else MapSqlParameterSource(mapOf("relname" to relname)),
                   ) { rs ->
                      val relname = rs.getString("relname")
 
