@@ -21,6 +21,7 @@ internal fun relnameGauge(
                .description(description)
                .tag("relname", relname)
                .tags(tags)
+               .strongReference(true)
                .register(registry)
          }
       }
