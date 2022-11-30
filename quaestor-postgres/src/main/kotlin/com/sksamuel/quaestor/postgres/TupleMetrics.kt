@@ -78,22 +78,22 @@ class TupleMetrics(
                      if (grouped) queryGrouped else query,
                      MapSqlParameterSource(mapOf("relname" to relname)),
                   ) { rs ->
-                     val relname = rs.getString("relname")
+                     val r = if (grouped) relname else rs.getString("relname")
 
-                     liveTupleCounts(relname).set(rs.getLong("n_live_tup"))
-                     insertedTupleCounts(relname).set(rs.getLong("n_tup_ins"))
+                     liveTupleCounts(r).set(rs.getLong("n_live_tup"))
+                     insertedTupleCounts(r).set(rs.getLong("n_tup_ins"))
 
-                     deadTupleCounts(relname).set(rs.getLong("n_dead_tup"))
-                     deletedTupleCounts(relname).set(rs.getLong("n_tup_del"))
+                     deadTupleCounts(r).set(rs.getLong("n_dead_tup"))
+                     deletedTupleCounts(r).set(rs.getLong("n_tup_del"))
 
-                     tupUpd(relname).set(rs.getLong("n_tup_upd"))
-                     tupHotUpd(relname).set(rs.getLong("n_tup_hot_upd"))
+                     tupUpd(r).set(rs.getLong("n_tup_upd"))
+                     tupHotUpd(r).set(rs.getLong("n_tup_hot_upd"))
 
-                     modifiedSinceAnalyzed(relname).set(rs.getLong("n_mod_since_analyze"))
-                     insSinceVacuum(relname).set(rs.getLong("n_ins_since_vacuum"))
+                     modifiedSinceAnalyzed(r).set(rs.getLong("n_mod_since_analyze"))
+                     insSinceVacuum(r).set(rs.getLong("n_ins_since_vacuum"))
 
-                     idxTupFetch(relname).set(rs.getLong("idx_tup_fetch"))
-                     seqTupRead(relname).set(rs.getLong("seq_tup_read"))
+                     idxTupFetch(r).set(rs.getLong("idx_tup_fetch"))
+                     seqTupRead(r).set(rs.getLong("seq_tup_read"))
                   }
                }
             }.onFailure { logger.warn(it) { "Error fetching tuple metrics" } }
