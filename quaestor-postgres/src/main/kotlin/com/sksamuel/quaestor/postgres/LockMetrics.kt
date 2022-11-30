@@ -56,7 +56,7 @@ class LockMetrics(
                runInterruptible(Dispatchers.IO) {
                   template.query(
                      query,
-                     MapSqlParameterSource(mapOf("relname" to relname))
+                     MapSqlParameterSource(mapOf("relname" to relname)),
                   ) { rs ->
                      val fastpath = rs.getBoolean("fastpath")
                      val count = rs.getLong("count")

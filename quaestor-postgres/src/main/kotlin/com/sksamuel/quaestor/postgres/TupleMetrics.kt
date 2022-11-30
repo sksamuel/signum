@@ -11,7 +11,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import mu.KotlinLogging
-import org.springframework.jdbc.core.namedparam.EmptySqlParameterSource
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
@@ -77,7 +76,7 @@ class TupleMetrics(
                runInterruptible(Dispatchers.IO) {
                   template.query(
                      if (grouped) queryGrouped else query,
-                     if (grouped) EmptySqlParameterSource() else MapSqlParameterSource(mapOf("relname" to relname)),
+                     MapSqlParameterSource(mapOf("relname" to relname)),
                   ) { rs ->
                      val relname = rs.getString("relname")
 

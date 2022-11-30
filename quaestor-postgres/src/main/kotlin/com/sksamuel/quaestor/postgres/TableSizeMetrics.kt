@@ -67,7 +67,7 @@ class TableSizeMetrics(
                runInterruptible(Dispatchers.IO) {
                   template.query(
                      if (grouped) queryGrouped else query,
-                     if (grouped) EmptySqlParameterSource() else MapSqlParameterSource(mapOf("relname" to relname)),
+                     MapSqlParameterSource(mapOf("relname" to relname)),
                   ) { rs ->
                      val r = if (grouped) relname else rs.getString("relname")
                      pgRelationSizeMain(r).set(rs.getLong("pg_relation_size_main"))
