@@ -63,6 +63,18 @@ class AutoVacuumMetrics(
          registry
       )
 
+      val autoanalyzeOffset = relnameGauge(
+         "quaestor.postgres.autoanalyze_offset",
+         "Time in millis from now to when the last autoanalyze occured",
+         registry
+      )
+
+      val autovacuumOffset = relnameGauge(
+         "quaestor.postgres.autovacuum_offset",
+         "Time in millis from now to when the last autovacuum occured",
+         registry
+      )
+
       GlobalScope.launch {
          while (isActive) {
             runCatching {
@@ -75,8 +87,24 @@ class AutoVacuumMetrics(
                      val r = if (grouped) relname else rs.getString("relname")
                      autovacuumCounts(r).set(rs.getLong("autovacuum_count"))
                      autoanalyzeCounts(r).set(rs.getLong("autoanalyze_count"))
-                     lastAutovacuumTimestamps(r).set(rs.getTimestamp("last_autovacuum")?.time ?: 0)
-                     lastAutoanalyzeTimestamps(r).set(rs.getTimestamp("last_autoanalyze")?.time ?: 0)
+
+                     val lastAutovacuum = rs.getTimestamp("last_autovacuum")
+                     if (lastAutovacuum == null) {
+                        lastAutovacuumTimestamps(r).set(0)
+                        autovacuumOffset(r).set(0)
+                     } else {
+                        lastAutovacuumTimestamps(r).set(lastAutovacuum.time)
+                        autovacuumOffset(r).set(System.currentTimeMillis() - lastAutovacuum.time)
+                     }
+
+                     val lastAutoanalyze = rs.getTimestamp("last_autoanalyze")
+                     if (lastAutoanalyze == null) {
+                        lastAutoanalyzeTimestamps(r).set(0)
+                        autoanalyzeOffset(r).set(0)
+                     } else {
+                        lastAutoanalyzeTimestamps(r).set(lastAutoanalyze.time)
+                        autoanalyzeOffset(r).set(System.currentTimeMillis() - lastAutoanalyze.time)
+                     }
                   }
                }
             }.onFailure { logger.warn(it) { "Error fetching auto vacuum metrics" } }
