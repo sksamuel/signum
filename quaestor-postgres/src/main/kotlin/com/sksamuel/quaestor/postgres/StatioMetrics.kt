@@ -20,8 +20,7 @@ import kotlin.time.Duration.Companion.minutes
 class StatioMetrics(
    ds: DataSource,
    private val relname: String? = null,
-   private val minsize: Int = 100000,
-   private val interval: Duration = 1.minutes,
+   private val interval: Duration = 5.minutes,
 ) : MeterBinder {
 
    private val logger = KotlinLogging.logger { }
@@ -87,15 +86,15 @@ class StatioMetrics(
                      query,
                      MapSqlParameterSource(mapOf("relname" to (relname ?: "%"))),
                   ) { rs ->
-                     val index = rs.getString("index")
-                     heapBlksRead(index).set(rs.getLong("heap_blks_read"))
-                     heapBlksHit(index).set(rs.getLong("heap_blks_hit"))
-                     idxBlksRead(index).set(rs.getLong("idx_blks_read"))
-                     idxBlksHit(index).set(rs.getLong("idx_blks_hit"))
-                     toastBlksRead(index).set(rs.getLong("toast_blks_read"))
-                     toastBlksHit(index).set(rs.getLong("toast_blks_hit"))
-                     tidxBlksRead(index).set(rs.getLong("tidx_blks_read"))
-                     tidxBlksHit(index).set(rs.getLong("tidx_blks_hit"))
+                     val relname = rs.getString("relname")
+                     heapBlksRead(relname).set(rs.getLong("heap_blks_read"))
+                     heapBlksHit(relname).set(rs.getLong("heap_blks_hit"))
+                     idxBlksRead(relname).set(rs.getLong("idx_blks_read"))
+                     idxBlksHit(relname).set(rs.getLong("idx_blks_hit"))
+                     toastBlksRead(relname).set(rs.getLong("toast_blks_read"))
+                     toastBlksHit(relname).set(rs.getLong("toast_blks_hit"))
+                     tidxBlksRead(relname).set(rs.getLong("tidx_blks_read"))
+                     tidxBlksHit(relname).set(rs.getLong("tidx_blks_hit"))
                   }
                }
             }.onFailure { logger.warn(it) { "Error fetching statio metrics" } }

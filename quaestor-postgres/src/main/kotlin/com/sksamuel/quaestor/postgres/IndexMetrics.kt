@@ -21,7 +21,7 @@ class IndexMetrics(
    ds: DataSource,
    private val relname: String? = null,
    private val minsize: Int = 100000,
-   private val interval: Duration = 1.minutes,
+   private val interval: Duration = 5.minutes,
 ) : MeterBinder {
 
    private val logger = KotlinLogging.logger { }

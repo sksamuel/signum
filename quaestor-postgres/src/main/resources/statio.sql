@@ -1,4 +1,5 @@
-select heap_blks_read,
+select relname,
+       heap_blks_read,
        heap_blks_hit,
        idx_blks_read,
        idx_blks_hit,
