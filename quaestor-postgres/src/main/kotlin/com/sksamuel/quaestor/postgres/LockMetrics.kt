@@ -14,6 +14,7 @@ import kotlinx.coroutines.runInterruptible
 import mu.KotlinLogging
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.time.Duration
@@ -28,25 +29,22 @@ class LockMetrics(
    private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/fast_path_locks.sql").bufferedReader().readText()
+   private val gauges = ConcurrentHashMap<Pair<String, Boolean>, AtomicLong>()
 
    override fun bindTo(registry: MeterRegistry) {
 
-      val fastPathLocks = AtomicLong(0).also {
-         Gauge
-            .builder("quaestor.postgres.locks.fastpath") { it }
-            .description("The total number of fastpath locks")
-            .tag("relname", relname)
-            .tag("fastpath", "true")
-            .register(registry)
-      }
-
-      val nonFastPathLocks = AtomicLong(0).also {
-         Gauge
-            .builder("quaestor.postgres.locks.fastpath") { it }
-            .description("The total number of non-fastpath locks")
-            .tag("relname", relname)
-            .tag("fastpath", "false")
-            .register(registry)
+      fun gauge(mode: String, fastpath: Boolean): AtomicLong {
+         return gauges.getOrPut(Pair(mode, fastpath)) {
+            AtomicLong(0).also {
+               Gauge
+                  .builder("quaestor.postgres.locks.fastpath") { it }
+                  .description("The total number of fastpath locks")
+                  .tag("relname", relname)
+                  .tag("fastpath", fastpath.toString())
+                  .tag("mode", mode)
+                  .register(registry)
+            }
+         }
       }
 
       GlobalScope.launch {
@@ -59,8 +57,9 @@ class LockMetrics(
                      MapSqlParameterSource(mapOf("relname" to relname)),
                   ) { rs ->
                      val fastpath = rs.getBoolean("fastpath")
+                     val mode = rs.getString("mode")
                      val count = rs.getLong("count")
-                     if (fastpath) fastPathLocks.set(count) else nonFastPathLocks.set(count)
+                     gauge(mode, fastpath).set(count)
                   }
                }
             }.onFailure { logger.warn(it) { "Error fetching lock metrics" } }
