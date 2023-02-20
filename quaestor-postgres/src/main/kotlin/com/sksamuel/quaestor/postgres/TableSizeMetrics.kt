@@ -55,7 +55,7 @@ class TableSizeMetrics(
 
       val pgTotalRelationSize = relnameGauge(
          "quaestor.postgres.pg_total_relation_size",
-         "The size of the Visibility Map",
+         "The size of the all relations summed",
          registry
       )
 
