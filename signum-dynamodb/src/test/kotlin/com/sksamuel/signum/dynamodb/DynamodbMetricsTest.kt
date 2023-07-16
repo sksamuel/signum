@@ -4,7 +4,6 @@ import io.kotest.core.extensions.install
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.TestContainerExtension
 import io.kotest.matchers.shouldBe
-import io.micrometer.core.instrument.Meter
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.regions.Region
@@ -27,7 +26,7 @@ class DynamodbMetricsTest : FunSpec({
    val dynamoEndpoint = "http://${ext.host}:" + ext.firstMappedPort
    val dynamoRegion = "local"
 
-   test("timer metrics by operation") {
+   test("request timer metrics by operation") {
 
       val registry = SimpleMeterRegistry()
       val metrics = DynamodbMetrics()
@@ -74,25 +73,100 @@ class DynamodbMetricsTest : FunSpec({
             .key(mapOf("key" to AttributeValue.fromS("a"), "range" to AttributeValue.fromN("1"))).build()
       ).item() shouldBe mapOf("key" to AttributeValue.fromS("a"), "range" to AttributeValue.fromN("1"))
 
-      registry.timer(
-         "signum.dynamodb.operations.timer",
+      registry.get("signum.dynamodb.requests.timer").tags(
          "operation",
          "GetItem",
          "client_type",
          "SYNC",
          "success",
          "true"
-      ).count() shouldBe 1L
+      ).timer().count() shouldBe 1L
 
-      registry.timer(
-         "signum.dynamodb.operations.timer",
+      registry.get("signum.dynamodb.requests.timer").tags(
          "operation",
          "PutItem",
          "client_type",
          "SYNC",
          "success",
          "true"
-      ).count() shouldBe 1L
+      ).timer().count() shouldBe 1L
+
+      registry.get("signum.dynamodb.requests.timer").tags(
+         "operation",
+         "CreateTable",
+         "client_type",
+         "SYNC",
+         "success",
+         "true"
+      ).timer().count() shouldBe 1L
    }
 
+   test("request sizes") {
+
+      val registry = SimpleMeterRegistry()
+      val metrics = DynamodbMetrics()
+      metrics.bindTo(registry)
+
+      val client = DynamoDbClient.builder()
+         .endpointOverride(URI.create(dynamoEndpoint))
+         .region(Region.of(dynamoRegion))
+         .overrideConfiguration(
+            ClientOverrideConfiguration
+               .builder()
+               .addExecutionInterceptor(metrics)
+               .build()
+         ).build()
+
+      client.createTable(
+         CreateTableRequest
+            .builder()
+            .tableName("mytable2")
+            .keySchema(
+               KeySchemaElement.builder().keyType(KeyType.HASH).attributeName("key").build(),
+               KeySchemaElement.builder().keyType(KeyType.RANGE).attributeName("range").build(),
+            )
+            .attributeDefinitions(
+               AttributeDefinition.builder().attributeName("key").attributeType(ScalarAttributeType.S).build(),
+               AttributeDefinition.builder().attributeName("range").attributeType(ScalarAttributeType.N).build(),
+            )
+            .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(10).writeCapacityUnits(10).build())
+            .build()
+      ).sdkHttpResponse().isSuccessful shouldBe true
+
+      client.putItem(
+         PutItemRequest
+            .builder()
+            .tableName("mytable2")
+            .item(mapOf("key" to AttributeValue.fromS("a"), "range" to AttributeValue.fromN("1")))
+            .build()
+      ).sdkHttpResponse().isSuccessful shouldBe true
+
+      client.getItem(
+         GetItemRequest
+            .builder()
+            .tableName("mytable2")
+            .key(mapOf("key" to AttributeValue.fromS("a"), "range" to AttributeValue.fromN("1"))).build()
+      ).item() shouldBe mapOf("key" to AttributeValue.fromS("a"), "range" to AttributeValue.fromN("1"))
+
+      registry.get("signum.dynamodb.requests.size").tags(
+         "operation",
+         "CreateTable",
+         "client_type",
+         "SYNC",
+      ).gauge().value() shouldBe 311.0
+
+      registry.get("signum.dynamodb.requests.size").tags(
+         "operation",
+         "PutItem",
+         "client_type",
+         "SYNC",
+      ).gauge().value() shouldBe 67.0
+
+      registry.get("signum.dynamodb.requests.size").tags(
+         "operation",
+         "GetItem",
+         "client_type",
+         "SYNC",
+      ).gauge().value() shouldBe 66.0
+   }
 })
