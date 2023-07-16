@@ -19,7 +19,7 @@ Use module `signum-postgres`
 * Bind to a meter registry.
 
 ```kotlin
-   val metrics = TableMetrics(ds)
+val metrics = TableMetrics(ds)
 metrics.bindTo(registry)
 ```
 
@@ -75,7 +75,7 @@ Note: This module works with the AWS SDK version 2+ only.
 * Attach as an executor interceptor when creating the client.
 
 ```kotlin
-   val metrics = DynamodbMetrics()
+val metrics = DynamodbMetrics()
 metrics.bindTo(registry)
 
 DynamoDbClient
@@ -90,8 +90,41 @@ DynamoDbClient
 
 #### Provided Metrics
 
-| Metric Name                   | Description                         | Tags                           |
-|-------------------------------|-------------------------------------|--------------------------------|
-| signum.dynamodb.request.timer | Dynamodb operation times and counts | operation, client_type, status |
-| signum.dynamodb.request.size  | Dynamodb request sizes              | operation, client_type         |
-| signum.dynamodb.response.size | Dynamodb response sizes             | operation, client_type         |
+| Metric Name                     | Description                         | Tags                           |
+|---------------------------------|-------------------------------------|--------------------------------|
+| signum.dynamodb.request.timer   | Dynamodb operation times and counts | operation, client_type, status |
+| signum.dynamodb.request.size    | Dynamodb request sizes              | operation, client_type         |
+| signum.dynamodb.response.size   | Dynamodb response sizes             | operation, client_type         |
+| signum.dynamodb.active.requests | Dynamodb active requests            |                                |
+
+### S3
+
+Use module `signum-s3`.
+
+Note: This module works with the AWS SDK version 2+ only.
+
+#### How to use
+
+* Create a `S3Metrics` instance
+* Bind to a meter registry.
+* Attach as an executor interceptor when creating the client.
+
+```kotlin
+val metrics = S3Metrics()
+metrics.bindTo(registry)
+
+S3Client
+   .builder()
+   .overrideConfiguration(
+      ClientOverrideConfiguration
+         .builder()
+         .addExecutionInterceptor(metrics)
+         .build()
+   ).build()
+```
+
+#### Provided Metrics
+
+| Metric Name               | Description        | Tags |
+|---------------------------|--------------------|------|
+| signum.s3.active.requests | S3 active requests |      |
