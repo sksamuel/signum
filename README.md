@@ -10,7 +10,7 @@ For release see [changelog](changelog.md)
 
 ### Modules
 
-* [Postgres](#postges)
+* [Postgres](#postgres)
 * [Dynamo](#dynamo)
 * [S3](#s3)
 
