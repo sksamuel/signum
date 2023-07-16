@@ -14,12 +14,13 @@ Use module `signum-postgres`
 
 #### How to use
 
-* Create a metrics instance from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, passing in the datasource to use.
+* Create a metrics instance from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`,
+  passing in the datasource to use.
 * Bind to a meter registry.
 
 ```kotlin
    val metrics = TableMetrics(ds)
-   metrics.bindTo(registry)
+metrics.bindTo(registry)
 ```
 
 #### Provided Metrics
@@ -75,22 +76,22 @@ Note: This module works with the AWS SDK version 2+ only.
 
 ```kotlin
    val metrics = DynamodbMetrics()
-   metrics.bindTo(registry)
+metrics.bindTo(registry)
 
-   DynamoDbClient
-      .builder()
-      .overrideConfiguration(
-         ClientOverrideConfiguration
-            .builder()
-            .addExecutionInterceptor(metrics)
-            .build()
-      ).build()
+DynamoDbClient
+   .builder()
+   .overrideConfiguration(
+      ClientOverrideConfiguration
+         .builder()
+         .addExecutionInterceptor(metrics)
+         .build()
+   ).build()
 ```
 
 #### Provided Metrics
 
-| Metric Name                   | Description                         |
-|-------------------------------|-------------------------------------|
-| signum.dynamodb.request.timer | Dynamodb operation times and counts |
-| signum.dynamodb.request.size  | Dynamodb request sizes              |
-| signum.dynamodb.response.size | Dynamodb response sizes             |
+| Metric Name                   | Description                         | Tags                           |
+|-------------------------------|-------------------------------------|--------------------------------|
+| signum.dynamodb.request.timer | Dynamodb operation times and counts | operation, client_type, status |
+| signum.dynamodb.request.size  | Dynamodb request sizes              | operation, client_type         |
+| signum.dynamodb.response.size | Dynamodb response sizes             | operation, client_type         |

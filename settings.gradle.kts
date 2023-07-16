@@ -2,6 +2,7 @@ rootProject.name = "signum"
 
 include(
    ":signum-dynamodb",
+   ":signum-s3",
    ":signum-kafka",
    ":signum-postgres",
 )
