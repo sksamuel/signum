@@ -10,7 +10,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
-import mu.KotlinLogging
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
@@ -23,7 +22,6 @@ class StatioMetrics(
    private val interval: Duration = 5.minutes,
 ) : MeterBinder {
 
-   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/statio.sql").bufferedReader().readText()
 
@@ -97,7 +95,7 @@ class StatioMetrics(
                      tidxBlksHit(relname).set(rs.getLong("tidx_blks_hit"))
                   }
                }
-            }.onFailure { logger.warn(it) { "Error fetching statio metrics" } }
+            }
          }
       }
    }
