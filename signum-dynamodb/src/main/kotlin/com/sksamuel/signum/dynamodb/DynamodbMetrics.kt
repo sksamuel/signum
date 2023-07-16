@@ -73,7 +73,7 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
       responseSizes.clear()
    }
 
-   private var registry: MeterRegistry = SimpleMeterRegistry()
+   private var registry: MeterRegistry? = null
 
    override fun bindTo(registry: MeterRegistry) {
       this.registry = registry

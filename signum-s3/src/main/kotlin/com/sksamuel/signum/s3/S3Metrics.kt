@@ -1,9 +1,9 @@
 package com.sksamuel.signum.s3
 
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import io.micrometer.core.instrument.binder.MeterBinder
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import software.amazon.awssdk.core.ClientType
 import software.amazon.awssdk.core.interceptor.Context
 import software.amazon.awssdk.core.interceptor.ExecutionAttribute
@@ -11,6 +11,7 @@ import software.amazon.awssdk.core.interceptor.ExecutionAttributes
 import software.amazon.awssdk.core.interceptor.ExecutionInterceptor
 import software.amazon.awssdk.core.interceptor.SdkExecutionAttribute
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.toJavaDuration
 
@@ -29,7 +30,15 @@ class S3Metrics : MeterBinder, ExecutionInterceptor {
       .description("S3 operation times")
       .register(registry)
 
-   private var registry: MeterRegistry = SimpleMeterRegistry()
+   private val activeRequestsGauge = lazy {
+      val number = AtomicLong()
+      Gauge.builder("signum.s3.active.requests") { number }
+         .description("S3 active requests")
+         .register(registry)
+      number
+   }
+
+   private var registry: MeterRegistry? = null
 
    override fun bindTo(registry: MeterRegistry) {
       this.registry = registry
@@ -38,6 +47,7 @@ class S3Metrics : MeterBinder, ExecutionInterceptor {
    override fun beforeExecution(context: Context.BeforeExecution, executionAttributes: ExecutionAttributes) {
       executionAttributes.putAttribute(requestIdAttribute, UUID.randomUUID().toString())
       executionAttributes.putAttribute(startTimeAttribute, System.currentTimeMillis())
+      activeRequestsGauge.value.incrementAndGet()
    }
 
    override fun afterExecution(context: Context.AfterExecution, executionAttributes: ExecutionAttributes) {
@@ -46,5 +56,6 @@ class S3Metrics : MeterBinder, ExecutionInterceptor {
       val clientType = executionAttributes.getAttribute(SdkExecutionAttribute.CLIENT_TYPE)
       val time = System.currentTimeMillis() - executionAttributes.getAttribute(startTimeAttribute)
       timer(opname, clientType, status).record(time.milliseconds.toJavaDuration())
+      activeRequestsGauge.value.decrementAndGet()
    }
 }
