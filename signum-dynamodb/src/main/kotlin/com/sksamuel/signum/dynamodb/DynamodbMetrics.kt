@@ -18,7 +18,7 @@ import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.toJavaDuration
 
-class DynamodbMetrics : MeterBinder, ExecutionInterceptor {
+class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
 
    companion object {
       val requestIdAttribute = ExecutionAttribute<String>("RequestId")
@@ -45,6 +45,10 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor {
             .register(registry)
          number
       }
+   }
+
+   override fun close() {
+      gauges.clear()
    }
 
    private var registry: MeterRegistry = SimpleMeterRegistry()
