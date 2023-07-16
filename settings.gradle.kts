@@ -15,6 +15,10 @@ dependencyResolutionManagement {
    versionCatalogs {
       create("libs") {
 
+         val aws2 = "2.20.103"
+         library("awssdk-dynamodb", "software.amazon.awssdk:dynamodb:$aws2")
+         library("awssdk-s3", "software.amazon.awssdk:s3:$aws2")
+
          val kotest = "5.6.2"
          library("kotest-datatest", "io.kotest:kotest-framework-datatest:$kotest")
          library("kotest-junit5", "io.kotest:kotest-runner-junit5:$kotest")
