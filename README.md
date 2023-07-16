@@ -12,6 +12,16 @@ For release see [changelog](changelog.md)
 
 Use module `signum-postgres`
 
+#### How to use
+
+* Create a metrics instance from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, passing in the datasource to use.
+* Bind to a meter registry.
+
+```kotlin
+   val metrics = TableMetrics(ds)
+   metrics.bindTo(registry)
+```
+
 #### Provided Metrics
 
 | Metric Name                            | Description                                                                  |
@@ -42,10 +52,40 @@ Use module `signum-postgres`
 | signum.postgres.last_autoanalyze       | Timestamp in millis of when the last autoanalyze occured                     |
 | signum.postgres.autoanalyze_offset     | Time in millis from now to when the last autoanalyze occured                 |
 | signum.postgres.autovacuum_offset      | Time in millis from now to when the last autovacuum occured                  |
+| signum.postgres.heap_blks_read         | Number of disk blocks read from this table                                   |
+| signum.postgres.heap_blks_hit          | Number of buffer hits in this table                                          |
+| signum.postgres.idx_blks_read          | Number of disk blocks read from all indexes on this table                    |
+| signum.postgres.idx_blks_hit           | Number of buffer hits in all indexes on this table                           |
+| signum.postgres.toast_blks_read        | Number of disk blocks read from this table's TOAST table                     |
+| signum.postgres.toast_blks_hit         | Number of buffer hits in this table's TOAST table                            |
+| signum.postgres.tidx_blks_read         | Number of disk blocks read from this table's TOAST table indexes             |
+| signum.postgres.tidx_blks_hit          | Number of buffer hits in this table's TOAST table indexes                    |
 
 ### Dynamo
 
-Use module `signum-dynamodb`
+Use module `signum-dynamodb`.
+
+Note: This module works with the AWS SDK version 2+ only.
+
+#### How to use
+
+* Create a `DynamodbMetrics` instance
+* Bind to a meter registry.
+* Attach as an executor interceptor when creating the client.
+
+```kotlin
+   val metrics = DynamodbMetrics()
+metrics.bindTo(registry)
+
+DynamoDbClient
+   .builder()
+   .overrideConfiguration(
+      ClientOverrideConfiguration
+         .builder()
+         .addExecutionInterceptor(metrics)
+         .build()
+   ).build()
+```
 
 #### Provided Metrics
 
