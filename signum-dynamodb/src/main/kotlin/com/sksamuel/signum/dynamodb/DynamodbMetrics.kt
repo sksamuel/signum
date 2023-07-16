@@ -30,7 +30,7 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
       .tag("operation", opname)
       .tag("client_type", clientType.name)
       .tag("status", status.toString())
-      .description("Timer for operations")
+      .description("Dynamodb operation times")
       .register(registry)
 
    private val requestSizes = concurrentHashMap<Pair<String, ClientType>, AtomicLong>()
@@ -42,7 +42,7 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
          Gauge.builder("signum.dynamodb.request.size") { number }
             .tag("operation", opname)
             .tag("client_type", clientType.name)
-            .description("Request size gauge")
+            .description("Dynamodb request sizes")
             .register(registry)
          number
       }
@@ -54,7 +54,7 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
          Gauge.builder("signum.dynamodb.response.size") { number }
             .tag("operation", opname)
             .tag("client_type", clientType.name)
-            .description("Response size gauge")
+            .description("Dynamodb response sizes")
             .register(registry)
          number
       }

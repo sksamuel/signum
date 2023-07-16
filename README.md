@@ -12,7 +12,7 @@ For release see [changelog](changelog.md)
 
 Use module `signum-postgres`
 
-##### Provided Metrics
+#### Provided Metrics
 
 | Metric Name                            | Description                                                                  |
 |----------------------------------------|------------------------------------------------------------------------------|
@@ -46,3 +46,11 @@ Use module `signum-postgres`
 ### Dynamo
 
 Use module `signum-dynamodb`
+
+#### Provided Metrics
+
+| Metric Name                   | Description              |
+|-------------------------------|--------------------------|
+| signum.dynamodb.request.timer | Dynamodb operation times |
+| signum.dynamodb.request.size  | Dynamodb request sizes   |
+| signum.dynamodb.response.size | Dynamodb response sizes  |
