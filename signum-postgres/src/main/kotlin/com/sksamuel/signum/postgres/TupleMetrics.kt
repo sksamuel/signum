@@ -29,7 +29,10 @@ class TupleMetrics(
 
    override fun bindTo(registry: MeterRegistry) {
 
-      val insertedTupleCounts = relnameGauge("signum.postgres.n_tup_ins", "Number of rows inserted", registry)
+      val insertedTupleCounts = relnameGauge(
+         "signum.postgres.n_tup_ins",
+         "Number of rows inserted", registry
+      )
 
       val modifiedSinceAnalyzed = relnameGauge(
          "signum.postgres.n_mod_since_analyze",
@@ -37,17 +40,31 @@ class TupleMetrics(
          registry
       )
 
-      val deletedTupleCounts = relnameGauge("signum.postgres.n_tup_del", "Number of rows deleted", registry)
+      val deletedTupleCounts = relnameGauge(
+         "signum.postgres.n_tup_del",
+         "Number of rows deleted", registry
+      )
 
-      val liveTupleCounts = relnameGauge("signum.postgres.n_live_tup", "Estimated number of live rows", registry)
-      val deadTupleCounts = relnameGauge("signum.postgres.n_dead_tup", "Estimated number of dead rows", registry)
+      val liveTupleCounts = relnameGauge(
+         "signum.postgres.n_live_tup",
+         "Estimated number of live rows", registry
+      )
+
+      val deadTupleCounts = relnameGauge(
+         "signum.postgres.n_dead_tup",
+         "Estimated number of dead rows", registry
+      )
 
       val tupUpd = relnameGauge(
          "signum.postgres.n_tup_upd",
          "Number of rows updated (includes HOT updated rows)",
          registry
       )
-      val tupHotUpd = relnameGauge("signum.postgres.n_tup_hot_upd", "Number of rows HOT updated", registry)
+
+      val tupHotUpd = relnameGauge(
+         "signum.postgres.n_tup_hot_upd",
+         "Number of rows HOT updated", registry
+      )
 
       val seqTupRead = relnameGauge(
          "signum.postgres.seq_tup_read",

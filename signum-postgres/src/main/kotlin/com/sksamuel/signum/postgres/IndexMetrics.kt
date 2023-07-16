@@ -36,13 +36,13 @@ class IndexMetrics(
 
       val idxTupRead = relnameGauge(
          "signum.postgres.idx_tup_read",
-         "Number of live table rows fetched by simple index scans using this index",
+         "The number of index entries returned by scans on this index",
          registry
       )
 
       val idxTupFetch = relnameGauge(
          "signum.postgres.idx_tup_fetch",
-         "Disk space usage for the main fork of the specified index",
+         "The number of live table rows fetched by simple index scans using this index",
          registry
       )
 

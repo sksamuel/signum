@@ -49,7 +49,7 @@ class TableSizeMetrics(
 
       val pgTableSize = relnameGauge(
          "signum.postgres.pg_table_size",
-         "The size of the Free Space Map",
+         "The size of the table",
          registry
       )
 
