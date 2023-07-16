@@ -75,16 +75,16 @@ Note: This module works with the AWS SDK version 2+ only.
 
 ```kotlin
    val metrics = DynamodbMetrics()
-metrics.bindTo(registry)
+   metrics.bindTo(registry)
 
-DynamoDbClient
-   .builder()
-   .overrideConfiguration(
-      ClientOverrideConfiguration
-         .builder()
-         .addExecutionInterceptor(metrics)
-         .build()
-   ).build()
+   DynamoDbClient
+      .builder()
+      .overrideConfiguration(
+         ClientOverrideConfiguration
+            .builder()
+            .addExecutionInterceptor(metrics)
+            .build()
+      ).build()
 ```
 
 #### Provided Metrics
