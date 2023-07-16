@@ -89,8 +89,8 @@ Note: This module works with the AWS SDK version 2+ only.
 
 #### Provided Metrics
 
-| Metric Name                   | Description              |
-|-------------------------------|--------------------------|
-| signum.dynamodb.request.timer | Dynamodb operation times |
-| signum.dynamodb.request.size  | Dynamodb request sizes   |
-| signum.dynamodb.response.size | Dynamodb response sizes  |
+| Metric Name                   | Description                         |
+|-------------------------------|-------------------------------------|
+| signum.dynamodb.request.timer | Dynamodb operation times and counts |
+| signum.dynamodb.request.size  | Dynamodb request sizes              |
+| signum.dynamodb.response.size | Dynamodb response sizes             |
