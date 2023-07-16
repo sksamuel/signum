@@ -36,6 +36,14 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
    private val requestSizes = ConcurrentHashMap<Pair<String, ClientType>, AtomicLong>()
    private val responseSizes = ConcurrentHashMap<Pair<String, ClientType>, AtomicLong>()
 
+   private val activeRequestsGauge = lazy {
+      val number = AtomicLong()
+      Gauge.builder("signum.dynamodb.active.requests") { number }
+         .description("Dynamodb active requests")
+         .register(registry)
+      number
+   }
+
    private fun requestSize(opname: String, clientType: ClientType): AtomicLong {
       return requestSizes.getOrPut(Pair(opname, clientType)) {
          val number = AtomicLong()
@@ -74,6 +82,7 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
    override fun beforeExecution(context: Context.BeforeExecution, executionAttributes: ExecutionAttributes) {
       executionAttributes.putAttribute(requestIdAttribute, UUID.randomUUID().toString())
       executionAttributes.putAttribute(startTimeAttribute, System.currentTimeMillis())
+      activeRequestsGauge.value.incrementAndGet()
    }
 
    override fun beforeTransmission(context: Context.BeforeTransmission, executionAttributes: ExecutionAttributes) {
@@ -100,5 +109,6 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
       val clientType = executionAttributes.getAttribute(SdkExecutionAttribute.CLIENT_TYPE)
       val time = System.currentTimeMillis() - executionAttributes.getAttribute(startTimeAttribute)
       timer(opname, clientType, status).record(time.milliseconds.toJavaDuration())
+      activeRequestsGauge.value.decrementAndGet()
    }
 }
