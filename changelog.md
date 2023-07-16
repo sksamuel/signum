@@ -3,6 +3,7 @@
 ### 1.1.0
 
 * Renamed to Signum
+* Bumped to Kotlin 1.8
 * Added dynamo metrics:
   * signum.dynamodb.request.timer
   * signum.dynamodb.request.size
