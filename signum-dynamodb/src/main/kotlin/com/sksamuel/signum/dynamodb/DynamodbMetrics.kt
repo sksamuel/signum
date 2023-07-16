@@ -26,19 +26,20 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
    }
 
    private fun timer(opname: String, clientType: ClientType, status: Int) = Timer
-      .builder("signum.dynamodb.requests.timer")
+      .builder("signum.dynamodb.request.timer")
       .tag("operation", opname)
       .tag("client_type", clientType.name)
       .tag("status", status.toString())
       .description("Timer for operations")
       .register(registry)
 
-   private val gauges = concurrentHashMap<Pair<String, ClientType>, AtomicLong>()
+   private val requestSizes = concurrentHashMap<Pair<String, ClientType>, AtomicLong>()
+   private val responseSizes = concurrentHashMap<Pair<String, ClientType>, AtomicLong>()
 
    private fun requestSize(opname: String, clientType: ClientType): AtomicLong {
-      return gauges.getOrPut(Pair(opname, clientType)) {
+      return requestSizes.getOrPut(Pair(opname, clientType)) {
          val number = AtomicLong()
-         Gauge.builder("signum.dynamodb.requests.size") { number }
+         Gauge.builder("signum.dynamodb.request.size") { number }
             .tag("operation", opname)
             .tag("client_type", clientType.name)
             .description("Request size gauge")
@@ -47,8 +48,21 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
       }
    }
 
+   private fun responseSize(opname: String, clientType: ClientType): AtomicLong {
+      return responseSizes.getOrPut(Pair(opname, clientType)) {
+         val number = AtomicLong()
+         Gauge.builder("signum.dynamodb.response.size") { number }
+            .tag("operation", opname)
+            .tag("client_type", clientType.name)
+            .description("Response size gauge")
+            .register(registry)
+         number
+      }
+   }
+
    override fun close() {
-      gauges.clear()
+      requestSizes.clear()
+      responseSizes.clear()
    }
 
    private var registry: MeterRegistry = SimpleMeterRegistry()
@@ -68,6 +82,15 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
          val opname = executionAttributes.getAttribute(SdkExecutionAttribute.OPERATION_NAME)
          val clientType = executionAttributes.getAttribute(SdkExecutionAttribute.CLIENT_TYPE)
          requestSize(opname, clientType).set(requestSize)
+      }
+   }
+
+   override fun afterUnmarshalling(context: Context.AfterUnmarshalling, executionAttributes: ExecutionAttributes) {
+      val responseSize = context.httpResponse().firstMatchingHeader("Content-Length").getOrNull()?.toLongOrNull()
+      if (responseSize != null) {
+         val opname = executionAttributes.getAttribute(SdkExecutionAttribute.OPERATION_NAME)
+         val clientType = executionAttributes.getAttribute(SdkExecutionAttribute.CLIENT_TYPE)
+         responseSize(opname, clientType).set(responseSize)
       }
    }
 
