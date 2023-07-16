@@ -25,11 +25,11 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
       val startTimeAttribute = ExecutionAttribute<Long>("StartTime")
    }
 
-   private fun timer(opname: String, clientType: ClientType, success: Boolean) = Timer
+   private fun timer(opname: String, clientType: ClientType, status: Int) = Timer
       .builder("signum.dynamodb.requests.timer")
       .tag("operation", opname)
       .tag("client_type", clientType.name)
-      .tag("success", success.toString())
+      .tag("status", status.toString())
       .description("Timer for operations")
       .register(registry)
 
@@ -72,10 +72,10 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
    }
 
    override fun afterExecution(context: Context.AfterExecution, executionAttributes: ExecutionAttributes) {
-      val success = context.httpResponse().isSuccessful
+      val status = context.httpResponse().statusCode()
       val opname = executionAttributes.getAttribute(SdkExecutionAttribute.OPERATION_NAME)
       val clientType = executionAttributes.getAttribute(SdkExecutionAttribute.CLIENT_TYPE)
       val time = System.currentTimeMillis() - executionAttributes.getAttribute(startTimeAttribute)
-      timer(opname, clientType, success).record(time.milliseconds.toJavaDuration())
+      timer(opname, clientType, status).record(time.milliseconds.toJavaDuration())
    }
 }

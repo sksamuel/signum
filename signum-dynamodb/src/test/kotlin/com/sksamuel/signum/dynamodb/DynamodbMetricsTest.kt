@@ -78,8 +78,8 @@ class DynamodbMetricsTest : FunSpec({
          "GetItem",
          "client_type",
          "SYNC",
-         "success",
-         "true"
+         "status",
+         "200"
       ).timer().count() shouldBe 1L
 
       registry.get("signum.dynamodb.requests.timer").tags(
@@ -87,8 +87,8 @@ class DynamodbMetricsTest : FunSpec({
          "PutItem",
          "client_type",
          "SYNC",
-         "success",
-         "true"
+         "status",
+         "200"
       ).timer().count() shouldBe 1L
 
       registry.get("signum.dynamodb.requests.timer").tags(
@@ -96,8 +96,8 @@ class DynamodbMetricsTest : FunSpec({
          "CreateTable",
          "client_type",
          "SYNC",
-         "success",
-         "true"
+         "status",
+         "200"
       ).timer().count() shouldBe 1L
    }
 
