@@ -6,7 +6,6 @@ import io.kotest.extensions.testcontainers.TestContainerExtension
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration
 import software.amazon.awssdk.regions.Region
@@ -25,17 +24,10 @@ import java.net.URI
 class DynamodbMetricsTest : FunSpec({
 
    val ext = install(TestContainerExtension(dynamo))
-
    val dynamoEndpoint = "http://${ext.host}:" + ext.firstMappedPort
-   val dynamoRegion = "local"
 
-   test("request timer metrics by operation") {
-
-      val registry = SimpleMeterRegistry()
-      val metrics = DynamodbMetrics()
-      metrics.bindTo(registry)
-
-      val client = DynamoDbClient.builder()
+   fun createClient(metrics: DynamodbMetrics): DynamoDbClient {
+      return DynamoDbClient.builder()
          .endpointOverride(URI.create(dynamoEndpoint))
          // The region is meaningless for local DynamoDb but required for client builder validation
          .region(Region.US_EAST_1)
@@ -49,6 +41,15 @@ class DynamodbMetricsTest : FunSpec({
                .addExecutionInterceptor(metrics)
                .build()
          ).build()
+   }
+
+   test("request timer metrics by operation") {
+
+      val registry = SimpleMeterRegistry()
+      val metrics = DynamodbMetrics()
+      metrics.bindTo(registry)
+
+      val client = createClient(metrics)
 
       client.createTable(
          CreateTableRequest
@@ -62,7 +63,9 @@ class DynamodbMetricsTest : FunSpec({
                AttributeDefinition.builder().attributeName("key").attributeType(ScalarAttributeType.S).build(),
                AttributeDefinition.builder().attributeName("range").attributeType(ScalarAttributeType.N).build(),
             )
-            .provisionedThroughput(ProvisionedThroughput.builder().readCapacityUnits(10).writeCapacityUnits(10).build())
+            .provisionedThroughput(
+               ProvisionedThroughput.builder().readCapacityUnits(10).writeCapacityUnits(10).build()
+            )
             .build()
       ).sdkHttpResponse().isSuccessful shouldBe true
 
@@ -115,15 +118,7 @@ class DynamodbMetricsTest : FunSpec({
       val metrics = DynamodbMetrics()
       metrics.bindTo(registry)
 
-      val client = DynamoDbClient.builder()
-         .endpointOverride(URI.create(dynamoEndpoint))
-         .region(Region.of(dynamoRegion))
-         .overrideConfiguration(
-            ClientOverrideConfiguration
-               .builder()
-               .addExecutionInterceptor(metrics)
-               .build()
-         ).build()
+      val client = createClient(metrics)
 
       client.createTable(
          CreateTableRequest
@@ -184,15 +179,7 @@ class DynamodbMetricsTest : FunSpec({
       val metrics = DynamodbMetrics()
       metrics.bindTo(registry)
 
-      val client = DynamoDbClient.builder()
-         .endpointOverride(URI.create(dynamoEndpoint))
-         .region(Region.of(dynamoRegion))
-         .overrideConfiguration(
-            ClientOverrideConfiguration
-               .builder()
-               .addExecutionInterceptor(metrics)
-               .build()
-         ).build()
+      val client = createClient(metrics)
 
       client.createTable(
          CreateTableRequest
