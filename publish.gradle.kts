@@ -56,14 +56,14 @@ publishing {
     register("mavenJava", MavenPublication::class) {
       from(components["java"])
       pom {
-        name.set("quaestor")
-        description.set("Database metrics via micrometer")
-        url.set("http://www.github.com/sksamuel/quaestor")
+        name.set("signum")
+        description.set("Metrics via micrometer")
+        url.set("http://www.github.com/sksamuel/signum")
 
         scm {
-          connection.set("scm:git:http://www.github.com/sksamuel/quaestor/")
+          connection.set("scm:git:http://www.github.com/sksamuel/signum/")
           developerConnection.set("scm:git:http://github.com/sksamuel/")
-          url.set("http://www.github.com/sksamuel/quaestor")
+          url.set("http://www.github.com/sksamuel/signum")
         }
 
         licenses {

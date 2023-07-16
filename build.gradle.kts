@@ -12,7 +12,7 @@ buildscript {
 plugins {
    signing
    `maven-publish`
-   kotlin("jvm").version("1.7.20")
+   kotlin("jvm").version("1.8.21")
 }
 
 allprojects {
@@ -26,14 +26,13 @@ allprojects {
       }
    }
 
-   group = "com.sksamuel.quaestor"
+   group = "com.sksamuel.signum"
    version = Ci.version
 
    dependencies {
-      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
-      implementation("io.micrometer:micrometer-core:1.10.1")
-      implementation("io.github.microutils:kotlin-logging:3.0.4")
+      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2")
+      implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.2")
+      implementation("io.micrometer:micrometer-core:1.11.1")
    }
 
    tasks.named<Test>("test") {
