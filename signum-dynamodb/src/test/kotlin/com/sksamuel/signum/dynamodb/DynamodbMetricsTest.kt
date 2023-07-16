@@ -74,10 +74,25 @@ class DynamodbMetricsTest : FunSpec({
             .key(mapOf("key" to AttributeValue.fromS("a"), "range" to AttributeValue.fromN("1"))).build()
       ).item() shouldBe mapOf("key" to AttributeValue.fromS("a"), "range" to AttributeValue.fromN("1"))
 
-      registry.timer("signum.dynamodb.operations.timer", "operation", "GetItem", "client_type", "SYNC")
-         .count() shouldBe 1L
-      registry.timer("signum.dynamodb.operations.timer", "operation", "PutItem", "client_type", "SYNC")
-         .count() shouldBe 1L
+      registry.timer(
+         "signum.dynamodb.operations.timer",
+         "operation",
+         "GetItem",
+         "client_type",
+         "SYNC",
+         "success",
+         "true"
+      ).count() shouldBe 1L
+
+      registry.timer(
+         "signum.dynamodb.operations.timer",
+         "operation",
+         "PutItem",
+         "client_type",
+         "SYNC",
+         "success",
+         "true"
+      ).count() shouldBe 1L
    }
 
 })

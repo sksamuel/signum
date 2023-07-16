@@ -19,10 +19,11 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor {
    private val requestIdAttribute = ExecutionAttribute<String>("RequestId")
    private val startTimeAttribute = ExecutionAttribute<Long>("StartTime")
 
-   private fun timer(opname: String, clientType: ClientType) = Timer
+   private fun timer(opname: String, clientType: ClientType, success: Boolean) = Timer
       .builder("signum.dynamodb.operations.timer")
       .tag("operation", opname)
       .tag("client_type", clientType.name)
+      .tag("success", success.toString())
       .description("Timer by operation type")
       .register(registry)
 
@@ -38,9 +39,10 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor {
    }
 
    override fun afterExecution(context: Context.AfterExecution, executionAttributes: ExecutionAttributes) {
+      val success = context.httpResponse().isSuccessful
       val opname = executionAttributes.getAttribute(SdkExecutionAttribute.OPERATION_NAME)
       val clientType = executionAttributes.getAttribute(SdkExecutionAttribute.CLIENT_TYPE)
       val time = System.currentTimeMillis() - executionAttributes.getAttribute(startTimeAttribute)
-      timer(opname, clientType).record(time.milliseconds.toJavaDuration())
+      timer(opname, clientType, success).record(time.milliseconds.toJavaDuration())
    }
 }
