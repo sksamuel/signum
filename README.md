@@ -8,3 +8,10 @@ Signum is a Kotlin library that provides Micrometer metrics for various framewor
 
 For release see [changelog](changelog.md)
 
+### Postgres
+
+Use module `signum-postgres`
+
+### Dynamo
+
+Use module `signum-dynamodb`
