@@ -1,6 +1,5 @@
 package com.sksamuel.signum.dynamodb
 
-import io.kotest.common.concurrentHashMap
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
@@ -13,6 +12,7 @@ import software.amazon.awssdk.core.interceptor.ExecutionAttributes
 import software.amazon.awssdk.core.interceptor.ExecutionInterceptor
 import software.amazon.awssdk.core.interceptor.SdkExecutionAttribute
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.milliseconds
@@ -33,8 +33,8 @@ class DynamodbMetrics : MeterBinder, ExecutionInterceptor, AutoCloseable {
       .description("Dynamodb operation times")
       .register(registry)
 
-   private val requestSizes = concurrentHashMap<Pair<String, ClientType>, AtomicLong>()
-   private val responseSizes = concurrentHashMap<Pair<String, ClientType>, AtomicLong>()
+   private val requestSizes = ConcurrentHashMap<Pair<String, ClientType>, AtomicLong>()
+   private val responseSizes = ConcurrentHashMap<Pair<String, ClientType>, AtomicLong>()
 
    private fun requestSize(opname: String, clientType: ClientType): AtomicLong {
       return requestSizes.getOrPut(Pair(opname, clientType)) {
