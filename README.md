@@ -1,31 +1,22 @@
 # signum
 
-Signum is a Kotlin library that provides Micrometer metrics for various frameworks and resources.
+Signum is a Kotlin library that provides Micrometer metrics for postgres.
 
 ![master](https://github.com/sksamuel/signum/workflows/master/badge.svg)
-[<img src="https://img.shields.io/maven-central/v/com.sksamuel.signum/signum-postgres.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Csignum)
-[<img src="https://img.shields.io/nexus/s/https/oss.sonatype.org/com.sksamuel.signum/signum-postgres.svg?label=latest%20snapshot&style=plastic"/>](https://oss.sonatype.org/content/repositories/snapshots/com/sksamuel/signum/)
+[<img src="https://img.shields.io/maven-central/v/com.sksamuel.signum/signum.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Csignum)
+[<img src="https://img.shields.io/nexus/s/https/oss.sonatype.org/com.sksamuel.signum/signum.svg?label=latest%20snapshot&style=plastic"/>](https://oss.sonatype.org/content/repositories/snapshots/com/sksamuel/signum/)
 
 For release see [changelog](changelog.md)
 
-### Modules
-
-* [Postgres](#postgres)
-* [Dynamo](#dynamo)
-* [S3](#s3)
-
-### Postgres
-
-Use module `signum-postgres`
-
 #### How to use
 
-* Create a metrics instance from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`,
+* Create a metrics instance from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, `AutoVacuumMetrics`
   passing in the datasource to use.
+* Specify the table name (wildcards accepted), and specify an interval to re-run (or null for a one time shot).
 * Bind to a meter registry.
 
 ```kotlin
-val metrics = TableMetrics(ds)
+val metrics = TableMetrics(ds, "mytablename", null)
 metrics.bindTo(registry)
 ```
 
@@ -67,70 +58,3 @@ metrics.bindTo(registry)
 | signum.postgres.toast_blks_hit         | Number of buffer hits in this table's TOAST table                            |
 | signum.postgres.tidx_blks_read         | Number of disk blocks read from this table's TOAST table indexes             |
 | signum.postgres.tidx_blks_hit          | Number of buffer hits in this table's TOAST table indexes                    |
-
-### Dynamo
-
-Use module `signum-dynamodb`.
-
-Note: This module works with the AWS SDK version 2+ only.
-
-#### How to use
-
-* Create a `DynamodbMetrics` instance
-* Bind to a meter registry.
-* Attach as an executor interceptor when creating the client.
-
-```kotlin
-val metrics = DynamodbMetrics()
-metrics.bindTo(registry)
-
-DynamoDbClient
-   .builder()
-   .overrideConfiguration(
-      ClientOverrideConfiguration
-         .builder()
-         .addExecutionInterceptor(metrics)
-         .build()
-   ).build()
-```
-
-#### Provided Metrics
-
-| Metric Name                     | Description                         | Tags                           |
-|---------------------------------|-------------------------------------|--------------------------------|
-| signum.dynamodb.request.timer   | Dynamodb operation times and counts | operation, client_type, status |
-| signum.dynamodb.request.size    | Dynamodb request sizes              | operation, client_type         |
-| signum.dynamodb.response.size   | Dynamodb response sizes             | operation, client_type         |
-| signum.dynamodb.active.requests | Dynamodb active requests            |                                |
-
-### S3
-
-Use module `signum-s3`.
-
-Note: This module works with the AWS SDK version 2+ only.
-
-#### How to use
-
-* Create a `S3Metrics` instance
-* Bind to a meter registry.
-* Attach as an executor interceptor when creating the client.
-
-```kotlin
-val metrics = S3Metrics()
-metrics.bindTo(registry)
-
-S3Client
-   .builder()
-   .overrideConfiguration(
-      ClientOverrideConfiguration
-         .builder()
-         .addExecutionInterceptor(metrics)
-         .build()
-   ).build()
-```
-
-#### Provided Metrics
-
-| Metric Name               | Description        | Tags |
-|---------------------------|--------------------|------|
-| signum.s3.active.requests | S3 active requests |      |
