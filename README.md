@@ -1,6 +1,6 @@
 # signum
 
-Signum is a Kotlin library that provides Micrometer metrics for postgres.
+Signum is a Kotlin library that provides metrics for postgres by scanning system tables and publishing the outputs to Micrometer.
 
 ![master](https://github.com/sksamuel/signum/workflows/master/badge.svg)
 [<img src="https://img.shields.io/maven-central/v/com.sksamuel.signum/signum.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Csignum)
@@ -13,7 +13,7 @@ For release see [changelog](changelog.md)
 * Create a metrics instance from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, `AutoVacuumMetrics`
   passing in the datasource to use.
 * Specify the table name (wildcards accepted), and specify an interval to re-run (or null for a one time shot).
-* Bind to a meter registry.
+* Bind to a Micrometer meter registry.
 
 ```kotlin
 val metrics = TableMetrics(ds, "mytablename", null)
