@@ -9,23 +9,21 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 class TableSizeMetrics(
    ds: DataSource,
    private val relname: String,
-   private val grouped: Boolean = true,
-   private val interval: Duration = 1.minutes,
+   private val interval: Duration?,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
-   private val query = javaClass.getResourceAsStream("/table_size.sql").bufferedReader().readText()
-   private val queryGrouped = javaClass.getResourceAsStream("/table_size_grouped.sql").bufferedReader().readText()
+   private val sql = javaClass.getResourceAsStream("/table_size.sql").bufferedReader().readText()
 
    override fun bindTo(registry: MeterRegistry) {
 
@@ -59,23 +57,27 @@ class TableSizeMetrics(
          registry
       )
 
-      GlobalScope.launch {
-         while (isActive) {
-            runCatching {
+      suspend fun query() = runCatching {
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               sql,
+               MapSqlParameterSource(mapOf("relname" to relname)),
+            ) { rs ->
+               val relname = rs.getString("relname")
+               pgRelationSizeMain(relname).set(rs.getLong("pg_relation_size_main"))
+               pgRelationSizeFsm(relname).set(rs.getLong("pg_relation_size_fsm"))
+               pgRelationSizeVm(relname).set(rs.getLong("pg_relation_size_vm"))
+               pgTableSize(relname).set(rs.getLong("pg_table_size"))
+               pgTotalRelationSize(relname).set(rs.getLong("pg_total_relation_size"))
+            }
+         }
+
+      }
+      if (interval == null) runBlocking { query() } else {
+         GlobalScope.launch {
+            while (isActive) {
                delay(interval)
-               runInterruptible(Dispatchers.IO) {
-                  template.query(
-                     if (grouped) queryGrouped else query,
-                     MapSqlParameterSource(mapOf("relname" to relname)),
-                  ) { rs ->
-                     val r = if (grouped) relname else rs.getString("relname")
-                     pgRelationSizeMain(r).set(rs.getLong("pg_relation_size_main"))
-                     pgRelationSizeFsm(r).set(rs.getLong("pg_relation_size_fsm"))
-                     pgRelationSizeVm(r).set(rs.getLong("pg_relation_size_vm"))
-                     pgTableSize(r).set(rs.getLong("pg_table_size"))
-                     pgTotalRelationSize(r).set(rs.getLong("pg_total_relation_size"))
-                  }
-               }
+               query()
             }
          }
       }

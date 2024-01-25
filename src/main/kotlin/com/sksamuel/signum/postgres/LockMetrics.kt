@@ -10,6 +10,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -17,12 +18,14 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
+/**
+ * Adds metrics for lock fast path.
+ */
 class LockMetrics(
    ds: DataSource,
    private val relname: String,
-   private val interval: Duration = 1.minutes,
+   private val interval: Duration?,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
@@ -45,21 +48,29 @@ class LockMetrics(
          }
       }
 
-      GlobalScope.launch {
-         while (isActive) {
-            runCatching {
+      suspend fun query() = runCatching {
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               query,
+               MapSqlParameterSource(mapOf("relname" to relname)),
+            ) { rs ->
+               val fastpath = rs.getBoolean("fastpath")
+               val mode = rs.getString("mode")
+               val count = rs.getLong("count")
+               gauge(mode, fastpath).set(count)
+            }
+         }
+      }
+
+      if (interval == null) {
+         runBlocking {
+            query()
+         }
+      } else {
+         GlobalScope.launch {
+            while (isActive) {
                delay(interval)
-               runInterruptible(Dispatchers.IO) {
-                  template.query(
-                     query,
-                     MapSqlParameterSource(mapOf("relname" to relname)),
-                  ) { rs ->
-                     val fastpath = rs.getBoolean("fastpath")
-                     val mode = rs.getString("mode")
-                     val count = rs.getLong("count")
-                     gauge(mode, fastpath).set(count)
-                  }
-               }
+               query()
             }
          }
       }

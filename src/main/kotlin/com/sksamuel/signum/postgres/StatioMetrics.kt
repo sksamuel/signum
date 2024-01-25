@@ -9,17 +9,17 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 class StatioMetrics(
    ds: DataSource,
-   private val relname: String? = null,
-   private val interval: Duration = 5.minutes,
+   private val relname: String,
+   private val interval: Duration?,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
@@ -75,25 +75,32 @@ class StatioMetrics(
          registry
       )
 
-      GlobalScope.launch {
-         while (isActive) {
-            runCatching {
-               delay(interval)
-               runInterruptible(Dispatchers.IO) {
-                  template.query(
-                     query,
-                     MapSqlParameterSource(mapOf("relname" to (relname ?: "%"))),
-                  ) { rs ->
-                     val relname = rs.getString("relname")
-                     heapBlksRead(relname).set(rs.getLong("heap_blks_read"))
-                     heapBlksHit(relname).set(rs.getLong("heap_blks_hit"))
-                     idxBlksRead(relname).set(rs.getLong("idx_blks_read"))
-                     idxBlksHit(relname).set(rs.getLong("idx_blks_hit"))
-                     toastBlksRead(relname).set(rs.getLong("toast_blks_read"))
-                     toastBlksHit(relname).set(rs.getLong("toast_blks_hit"))
-                     tidxBlksRead(relname).set(rs.getLong("tidx_blks_read"))
-                     tidxBlksHit(relname).set(rs.getLong("tidx_blks_hit"))
-                  }
+      suspend fun query() = runCatching {
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               query,
+               MapSqlParameterSource(mapOf("relname" to (relname ?: "%"))),
+            ) { rs ->
+               val relname = rs.getString("relname")
+               heapBlksRead(relname).set(rs.getLong("heap_blks_read"))
+               heapBlksHit(relname).set(rs.getLong("heap_blks_hit"))
+               idxBlksRead(relname).set(rs.getLong("idx_blks_read"))
+               idxBlksHit(relname).set(rs.getLong("idx_blks_hit"))
+               toastBlksRead(relname).set(rs.getLong("toast_blks_read"))
+               toastBlksHit(relname).set(rs.getLong("toast_blks_hit"))
+               tidxBlksRead(relname).set(rs.getLong("tidx_blks_read"))
+               tidxBlksHit(relname).set(rs.getLong("tidx_blks_hit"))
+            }
+         }
+      }
+      if (interval == null) {
+         runBlocking { query() }
+      } else {
+         GlobalScope.launch {
+            while (isActive) {
+               runCatching {
+                  delay(interval)
+                  query()
                }
             }
          }
