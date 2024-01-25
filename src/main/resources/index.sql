@@ -6,5 +6,5 @@ SELECT relid::regclass                        AS table,
        idx_scan
 FROM pg_stat_user_indexes
         JOIN pg_index USING (indexrelid)
-WHERE PG_RELATION_SIZE(indexrelid::regclass) > 10000
+WHERE PG_RELATION_SIZE(indexrelid::regclass) > :minsize
   AND indexrelid::regclass::text LIKE :relname

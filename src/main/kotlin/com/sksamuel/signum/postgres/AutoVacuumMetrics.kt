@@ -24,12 +24,11 @@ import kotlin.time.Duration
  * @param relname the relname query clause. Can include wildcards, eg %mytable%
  * @param interval the period to wait between running the metric queries in the database.
  *                 If null, then this will be a one time scan, which is useful if you want to run the metrics in a cron job rather than a long-running process.
- *                 Defaults to null.
  */
 class AutoVacuumMetrics(
-   private val ds: DataSource,
+   ds: DataSource,
    private val relname: String,
-   private val interval: Duration? = null,
+   private val interval: Duration?,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)

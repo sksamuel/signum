@@ -14,13 +14,21 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
+/**
+ * Adds index metrics.
+ *
+ * @param ds the [DataSource] to run queries against
+ * @param relname the relname query clause. Can include wildcards, eg %mytable%
+ * @param minsize any indexes smaller than this are ignored based on the output of PG_RELATION_SIZE.
+ * @param interval the period to wait between running the metric queries in the database.
+ *                 If null, then this will be a one time scan, which is useful if you want to run the metrics in a cron job rather than a long-running process.
+ */
 class IndexMetrics(
    ds: DataSource,
-   private val relname: String? = null,
+   private val relname: String,
    private val minsize: Int = 100000,
-   private val interval: Duration = 5.minutes,
+   private val interval: Duration?,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
@@ -52,26 +60,36 @@ class IndexMetrics(
          registry
       )
 
-      GlobalScope.launch {
-         while (isActive) {
-            runCatching {
-               delay(interval)
-               runInterruptible(Dispatchers.IO) {
-                  template.query(
-                     query,
-                     MapSqlParameterSource(
-                        mapOf(
-                           "relname" to (relname ?: "%"),
-                           "minsize" to minsize,
-                        )
-                     ),
-                  ) { rs ->
-                     val index = rs.getString("index")
-                     indexSize(index).set(rs.getLong("index_size"))
-                     idxTupRead(index).set(rs.getLong("idx_tup_read"))
-                     idxTupFetch(index).set(rs.getLong("idx_tup_fetch"))
-                     idxScan(index).set(rs.getLong("idx_scan"))
-                  }
+      suspend fun query() = runCatching {
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               query,
+               MapSqlParameterSource(
+                  mapOf(
+                     "relname" to relname,
+                     "minsize" to minsize,
+                  )
+               ),
+            ) { rs ->
+               val index = rs.getString("index")
+               indexSize(index).set(rs.getLong("index_size"))
+               idxTupRead(index).set(rs.getLong("idx_tup_read"))
+               idxTupFetch(index).set(rs.getLong("idx_tup_fetch"))
+               idxScan(index).set(rs.getLong("idx_scan"))
+            }
+         }
+      }
+
+      if (interval == null) {
+         GlobalScope.launch {
+            query()
+         }
+      } else {
+         GlobalScope.launch {
+            while (isActive) {
+               runCatching {
+                  delay(interval)
+                  query()
                }
             }
          }
