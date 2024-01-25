@@ -9,23 +9,21 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 class TupleMetrics(
    ds: DataSource,
    private val relname: String,
-   private val grouped: Boolean = true,
-   private val interval: Duration = 1.minutes,
+   private val interval: Duration?,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/tuples.sql").bufferedReader().readText()
-   private val queryGrouped = javaClass.getResourceAsStream("/tuples_grouped.sql").bufferedReader().readText()
 
    override fun bindTo(registry: MeterRegistry) {
 
@@ -84,33 +82,39 @@ class TupleMetrics(
          registry
       )
 
-      GlobalScope.launch {
-         while (isActive) {
-            runCatching {
+      suspend fun query() {
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               query,
+               MapSqlParameterSource(mapOf("relname" to relname)),
+            ) { rs ->
+               val relname = rs.getString("relname")
+
+               liveTupleCounts(relname).set(rs.getLong("n_live_tup"))
+               insertedTupleCounts(relname).set(rs.getLong("n_tup_ins"))
+
+               deadTupleCounts(relname).set(rs.getLong("n_dead_tup"))
+               deletedTupleCounts(relname).set(rs.getLong("n_tup_del"))
+
+               tupUpd(relname).set(rs.getLong("n_tup_upd"))
+               tupHotUpd(relname).set(rs.getLong("n_tup_hot_upd"))
+
+               modifiedSinceAnalyzed(relname).set(rs.getLong("n_mod_since_analyze"))
+               insSinceVacuum(relname).set(rs.getLong("n_ins_since_vacuum"))
+
+               idxTupFetch(relname).set(rs.getLong("idx_tup_fetch"))
+               seqTupRead(relname).set(rs.getLong("seq_tup_read"))
+            }
+         }
+      }
+
+      if (interval == null) runBlocking {
+         query()
+      } else {
+         GlobalScope.launch {
+            while (isActive) {
                delay(interval)
-               runInterruptible(Dispatchers.IO) {
-                  template.query(
-                     if (grouped) queryGrouped else query,
-                     MapSqlParameterSource(mapOf("relname" to relname)),
-                  ) { rs ->
-                     val r = if (grouped) relname else rs.getString("relname")
-
-                     liveTupleCounts(r).set(rs.getLong("n_live_tup"))
-                     insertedTupleCounts(r).set(rs.getLong("n_tup_ins"))
-
-                     deadTupleCounts(r).set(rs.getLong("n_dead_tup"))
-                     deletedTupleCounts(r).set(rs.getLong("n_tup_del"))
-
-                     tupUpd(r).set(rs.getLong("n_tup_upd"))
-                     tupHotUpd(r).set(rs.getLong("n_tup_hot_upd"))
-
-                     modifiedSinceAnalyzed(r).set(rs.getLong("n_mod_since_analyze"))
-                     insSinceVacuum(r).set(rs.getLong("n_ins_since_vacuum"))
-
-                     idxTupFetch(r).set(rs.getLong("idx_tup_fetch"))
-                     seqTupRead(r).set(rs.getLong("seq_tup_read"))
-                  }
-               }
+               query()
             }
          }
       }
