@@ -12,28 +12,28 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 /**
- * Adds autovacuum and autoanalyze metrics.
+ * Adds autovacuum and autoanalyze metrics for matching tables.
+ * For each matching table, a metric is emitted with the table as a tag.
  *
  * @param ds the [DataSource] to run queries against
  * @param relname the relname query clause. Can include wildcards, eg %mytable%
- * @param grouped responses for all results into a single metric. If false, then a separate metric for each relname in the resultset will be used.
  * @param interval the period to wait between running the metric queries in the database.
+ *                 If null, then this will be a one time scan, which is useful if you want to run the metrics in a cron job rather than a long-running process.
+ *                 Defaults to null.
  */
 class AutoVacuumMetrics(
    private val ds: DataSource,
    private val relname: String,
-   private val grouped: Boolean = true,
-   private val interval: Duration = 1.minutes,
+   private val interval: Duration? = null,
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/autovacuum.sql").bufferedReader().readText()
-   private val queryGrouped = javaClass.getResourceAsStream("/autovacuum_grouped.sql").bufferedReader().readText()
 
    override fun bindTo(registry: MeterRegistry) {
 
@@ -73,38 +73,63 @@ class AutoVacuumMetrics(
          registry
       )
 
-      GlobalScope.launch {
-         while (isActive) {
-            runCatching {
+      val gauges = Gauges(
+         autovacuumCounts,
+         autovacuumOffset,
+         autoanalyzeOffset,
+         lastAutoanalyzeTimestamps,
+         lastAutovacuumTimestamps,
+         autoanalyzeCounts,
+      )
+
+      if (interval == null) {
+         GlobalScope.launch {
+            query(gauges)
+         }
+      } else {
+         GlobalScope.launch {
+            while (isActive) {
                delay(interval)
-               runInterruptible(Dispatchers.IO) {
-                  template.query(
-                     if (grouped) queryGrouped else query,
-                     MapSqlParameterSource(mapOf("relname" to relname)),
-                  ) { rs ->
-                     val r = if (grouped) relname else rs.getString("relname")
-                     autovacuumCounts(r).set(rs.getLong("autovacuum_count"))
-                     autoanalyzeCounts(r).set(rs.getLong("autoanalyze_count"))
+            }
+         }
+      }
+   }
 
-                     val lastAutovacuum = rs.getTimestamp("last_autovacuum")
-                     if (lastAutovacuum == null) {
-                        lastAutovacuumTimestamps(r).set(0)
-                        autovacuumOffset(r).set(0)
-                     } else {
-                        lastAutovacuumTimestamps(r).set(lastAutovacuum.time)
-                        autovacuumOffset(r).set(System.currentTimeMillis() - lastAutovacuum.time)
-                     }
+   data class Gauges(
+      val autovacuumCounts: (String) -> AtomicLong,
+      val autovacuumOffset: (String) -> AtomicLong,
+      val autoanalyzeOffset: (String) -> AtomicLong,
+      val lastAutoanalyzeTimestamps: (String) -> AtomicLong,
+      val lastAutovacuumTimestamps: (String) -> AtomicLong,
+      val autoanalyzeCounts: (String) -> AtomicLong
+   )
 
-                     val lastAutoanalyze = rs.getTimestamp("last_autoanalyze")
-                     if (lastAutoanalyze == null) {
-                        lastAutoanalyzeTimestamps(r).set(0)
-                        autoanalyzeOffset(r).set(0)
-                     } else {
-                        lastAutoanalyzeTimestamps(r).set(lastAutoanalyze.time)
-                        autoanalyzeOffset(r).set(System.currentTimeMillis() - lastAutoanalyze.time)
-                     }
-                  }
-               }
+   private suspend fun query(gauges: Gauges): Result<Unit> = runCatching {
+      runInterruptible(Dispatchers.IO) {
+         template.query(
+            query,
+            MapSqlParameterSource(mapOf("relname" to relname)),
+         ) { rs ->
+            val relname = rs.getString("relname")
+            gauges.autovacuumCounts(relname).set(rs.getLong("autovacuum_count"))
+            gauges.autoanalyzeCounts(relname).set(rs.getLong("autoanalyze_count"))
+
+            val lastAutovacuum = rs.getTimestamp("last_autovacuum")
+            if (lastAutovacuum == null) {
+               gauges.lastAutovacuumTimestamps(relname).set(0)
+               gauges.autovacuumOffset(relname).set(0)
+            } else {
+               gauges.lastAutovacuumTimestamps(relname).set(lastAutovacuum.time)
+               gauges.autovacuumOffset(relname).set(System.currentTimeMillis() - lastAutovacuum.time)
+            }
+
+            val lastAutoanalyze = rs.getTimestamp("last_autoanalyze")
+            if (lastAutoanalyze == null) {
+               gauges.lastAutoanalyzeTimestamps(relname).set(0)
+               gauges.autoanalyzeOffset(relname).set(0)
+            } else {
+               gauges.lastAutoanalyzeTimestamps(relname).set(lastAutoanalyze.time)
+               gauges.autoanalyzeOffset(relname).set(System.currentTimeMillis() - lastAutoanalyze.time)
             }
          }
       }
