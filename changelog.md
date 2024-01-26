@@ -3,6 +3,7 @@
 ### 1.2.1
 
 * Added running vacuums as a gauge
+* Added pg_class reloptions
 
 ### 1.2.0
 
