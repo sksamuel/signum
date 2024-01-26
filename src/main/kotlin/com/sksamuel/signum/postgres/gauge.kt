@@ -27,3 +27,19 @@ internal fun relnameGauge(
       }
    }
 }
+
+internal fun gauge(
+   name: String,
+   description: String,
+   registry: MeterRegistry,
+   tags: List<Tag> = emptyList()
+): AtomicLong {
+   return AtomicLong(0L).also {
+      Gauge
+         .builder(name) { it }
+         .description(description)
+         .tags(tags)
+         .strongReference(true)
+         .register(registry)
+   }
+}

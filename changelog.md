@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.2.1
+
+* Added running vacuums as a gauge
+
 ### 1.2.0
 
 * Changed interval to be nullable - if not specified scan runs once and exits. Useful for cron jobs.

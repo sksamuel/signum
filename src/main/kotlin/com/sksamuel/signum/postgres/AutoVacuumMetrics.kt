@@ -13,7 +13,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import java.util.concurrent.atomic.AtomicLong
 import javax.sql.DataSource
 import kotlin.time.Duration
 
@@ -73,63 +72,61 @@ class AutoVacuumMetrics(
          registry
       )
 
-      val gauges = Gauges(
-         autovacuumCounts,
-         autovacuumOffset,
-         autoanalyzeOffset,
-         lastAutoanalyzeTimestamps,
-         lastAutovacuumTimestamps,
-         autoanalyzeCounts,
+      val runningVacuums = gauge(
+         "signum.postgres.pg_stat_progress_vacuum",
+         "Number of running vacuums",
+         registry
       )
+
+      suspend fun query(): Result<Unit> = runCatching {
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               query,
+               MapSqlParameterSource(mapOf("relname" to relname)),
+            ) { rs ->
+               val relname = rs.getString("relname")
+               autovacuumCounts(relname).set(rs.getLong("autovacuum_count"))
+               autoanalyzeCounts(relname).set(rs.getLong("autoanalyze_count"))
+
+               val lastAutovacuum = rs.getTimestamp("last_autovacuum")
+               if (lastAutovacuum == null) {
+                  lastAutovacuumTimestamps(relname).set(0)
+                  autovacuumOffset(relname).set(0)
+               } else {
+                  lastAutovacuumTimestamps(relname).set(lastAutovacuum.time)
+                  autovacuumOffset(relname).set(System.currentTimeMillis() - lastAutovacuum.time)
+               }
+
+               val lastAutoanalyze = rs.getTimestamp("last_autoanalyze")
+               if (lastAutoanalyze == null) {
+                  lastAutoanalyzeTimestamps(relname).set(0)
+                  autoanalyzeOffset(relname).set(0)
+               } else {
+                  lastAutoanalyzeTimestamps(relname).set(lastAutoanalyze.time)
+                  autoanalyzeOffset(relname).set(System.currentTimeMillis() - lastAutoanalyze.time)
+               }
+            }
+         }
+
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               "SELECT count(*) FROM pg_stat_progress_vacuum",
+            ) { rs ->
+               val count = rs.getLong(1)
+               runningVacuums.set(count)
+            }
+         }
+      }
 
       if (interval == null) {
          runBlocking {
-            query(gauges)
+            query()
          }
       } else {
          GlobalScope.launch {
             while (isActive) {
                delay(interval)
-            }
-         }
-      }
-   }
-
-   data class Gauges(
-      val autovacuumCounts: (String) -> AtomicLong,
-      val autovacuumOffset: (String) -> AtomicLong,
-      val autoanalyzeOffset: (String) -> AtomicLong,
-      val lastAutoanalyzeTimestamps: (String) -> AtomicLong,
-      val lastAutovacuumTimestamps: (String) -> AtomicLong,
-      val autoanalyzeCounts: (String) -> AtomicLong
-   )
-
-   private suspend fun query(gauges: Gauges): Result<Unit> = runCatching {
-      runInterruptible(Dispatchers.IO) {
-         template.query(
-            query,
-            MapSqlParameterSource(mapOf("relname" to relname)),
-         ) { rs ->
-            val relname = rs.getString("relname")
-            gauges.autovacuumCounts(relname).set(rs.getLong("autovacuum_count"))
-            gauges.autoanalyzeCounts(relname).set(rs.getLong("autoanalyze_count"))
-
-            val lastAutovacuum = rs.getTimestamp("last_autovacuum")
-            if (lastAutovacuum == null) {
-               gauges.lastAutovacuumTimestamps(relname).set(0)
-               gauges.autovacuumOffset(relname).set(0)
-            } else {
-               gauges.lastAutovacuumTimestamps(relname).set(lastAutovacuum.time)
-               gauges.autovacuumOffset(relname).set(System.currentTimeMillis() - lastAutovacuum.time)
-            }
-
-            val lastAutoanalyze = rs.getTimestamp("last_autoanalyze")
-            if (lastAutoanalyze == null) {
-               gauges.lastAutoanalyzeTimestamps(relname).set(0)
-               gauges.autoanalyzeOffset(relname).set(0)
-            } else {
-               gauges.lastAutoanalyzeTimestamps(relname).set(lastAutoanalyze.time)
-               gauges.autoanalyzeOffset(relname).set(System.currentTimeMillis() - lastAutoanalyze.time)
+               query()
             }
          }
       }
