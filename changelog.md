@@ -3,6 +3,7 @@
 ### 1.2.2
 
 * Added slow query count metric: `signum.postgres.slow_query_count`
+* Added lock counts by mode: `signum.postgres.locks.modes`
 
 ### 1.2.1
 

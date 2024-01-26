@@ -29,13 +29,15 @@ class LockMetrics(
 ) : MeterBinder {
 
    private val template = NamedParameterJdbcTemplate(ds)
-   private val query = javaClass.getResourceAsStream("/fast_path_locks.sql").bufferedReader().readText()
-   private val gauges = ConcurrentHashMap<Pair<String, Boolean>, AtomicLong>()
+   private val fastPathQuery = javaClass.getResourceAsStream("/fast_path_locks.sql").bufferedReader().readText()
+   private val modesQuery = javaClass.getResourceAsStream("/locks_by_type.sql").bufferedReader().readText()
+   private val fastPaths = ConcurrentHashMap<Pair<String, Boolean>, AtomicLong>()
+   private val modes = ConcurrentHashMap<Pair<String, String>, AtomicLong>()
 
    override fun bindTo(registry: MeterRegistry) {
 
-      fun gauge(mode: String, fastpath: Boolean): AtomicLong {
-         return gauges.getOrPut(Pair(mode, fastpath)) {
+      fun fastPathGauge(mode: String, fastpath: Boolean): AtomicLong {
+         return fastPaths.getOrPut(Pair(mode, fastpath)) {
             AtomicLong(0).also {
                Gauge
                   .builder("signum.postgres.locks.fastpath") { it }
@@ -48,29 +50,58 @@ class LockMetrics(
          }
       }
 
-      suspend fun query() = runCatching {
+      fun modeGauges(mode: String, relname: String): AtomicLong {
+         return modes.getOrPut(Pair(mode, relname)) {
+            AtomicLong(0).also {
+               Gauge
+                  .builder("signum.postgres.locks.modes") { it }
+                  .description("A count of the number of locks per mode")
+                  .tag("relname", relname)
+                  .tag("mode", mode)
+                  .register(registry)
+            }
+         }
+      }
+
+      suspend fun query1() = runCatching {
          runInterruptible(Dispatchers.IO) {
             template.query(
-               query,
+               fastPathQuery,
                MapSqlParameterSource(mapOf("relname" to relname)),
             ) { rs ->
                val fastpath = rs.getBoolean("fastpath")
                val mode = rs.getString("mode")
                val count = rs.getLong("count")
-               gauge(mode, fastpath).set(count)
+               fastPathGauge(mode, fastpath).set(count)
+            }
+         }
+      }
+
+      suspend fun query2() = runCatching {
+         runInterruptible(Dispatchers.IO) {
+            template.query(
+               modesQuery,
+               MapSqlParameterSource(mapOf("relname" to relname)),
+            ) { rs ->
+               val mode = rs.getString("mode")
+               val count = rs.getLong("count")
+               val relname = rs.getString("relname")
+               modeGauges(mode, relname).set(count)
             }
          }
       }
 
       if (interval == null) {
          runBlocking {
-            query()
+            query1()
+            query2()
          }
       } else {
          GlobalScope.launch {
             while (isActive) {
                delay(interval)
-               query()
+               query1()
+               query2()
             }
          }
       }
