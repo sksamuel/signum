@@ -1,12 +1,20 @@
 # Changelog
 
+
 ### 1.2.4
+
+* Added database level metrics:
+  * `signum.postgres.deadlocks`: Number of deadlocks detected in this database
+  * `signum.postgres.xact_commit`: Number of transactions in this database that have been committed
+  * `signum.postgres.xact_rollback`: Number of transactions in this database that have been rolled back
+* Added logging for broken queries using Kotlin Logging
+* Added freeze max age from reloptions: `autovacuum_freeze_max_age`
 
 ### 1.2.3
 
 * Added locks by grant type
 * Added counts for queries by wait
-*
+
 ### 1.2.2
 
 * Added slow query count metric: `signum.postgres.slow_query_count`
