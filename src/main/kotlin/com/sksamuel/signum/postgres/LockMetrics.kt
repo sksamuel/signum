@@ -31,8 +31,10 @@ class LockMetrics(
    private val template = NamedParameterJdbcTemplate(ds)
    private val fastPathQuery = javaClass.getResourceAsStream("/fast_path_locks.sql").bufferedReader().readText()
    private val modesQuery = javaClass.getResourceAsStream("/locks_by_type.sql").bufferedReader().readText()
+   private val locksByGrantQuery = javaClass.getResourceAsStream("/locks_by_grant.sql").bufferedReader().readText()
    private val fastPaths = ConcurrentHashMap<Pair<String, Boolean>, AtomicLong>()
    private val modes = ConcurrentHashMap<Pair<String, String>, AtomicLong>()
+   private val grants = ConcurrentHashMap<Pair<Boolean, String>, AtomicLong>()
 
    override fun bindTo(registry: MeterRegistry) {
 
@@ -63,7 +65,20 @@ class LockMetrics(
          }
       }
 
-      suspend fun query1() = runCatching {
+      fun grantedGauge(granted: Boolean, relname: String): AtomicLong {
+         return grants.getOrPut(Pair(granted, relname)) {
+            AtomicLong(0).also {
+               Gauge
+                  .builder("signum.postgres.locks.granted") { it }
+                  .description("A count of the number of locks by grant status")
+                  .tag("relname", relname)
+                  .tag("granted", granted.toString())
+                  .register(registry)
+            }
+         }
+      }
+
+      suspend fun queries(): Result<Unit> = runCatching {
          runInterruptible(Dispatchers.IO) {
             template.query(
                fastPathQuery,
@@ -74,34 +89,36 @@ class LockMetrics(
                val count = rs.getLong("count")
                fastPathGauge(mode, fastpath).set(count)
             }
-         }
-      }
-
-      suspend fun query2() = runCatching {
-         runInterruptible(Dispatchers.IO) {
             template.query(
                modesQuery,
                MapSqlParameterSource(mapOf("relname" to relname)),
             ) { rs ->
+               val relname = rs.getString("relname")
                val mode = rs.getString("mode")
                val count = rs.getLong("count")
-               val relname = rs.getString("relname")
                modeGauges(mode, relname).set(count)
+            }
+            template.query(
+               locksByGrantQuery,
+               MapSqlParameterSource(mapOf("relname" to relname)),
+            ) { rs ->
+               val relname = rs.getString("relname")
+               val granted = rs.getBoolean("granted")
+               val count = rs.getLong("count")
+               grantedGauge(granted, relname).set(count)
             }
          }
       }
 
       if (interval == null) {
          runBlocking {
-            query1()
-            query2()
+            queries()
          }
       } else {
          GlobalScope.launch {
             while (isActive) {
                delay(interval)
-               query1()
-               query2()
+               queries()
             }
          }
       }

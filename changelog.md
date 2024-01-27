@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.2.3
+
+* Added locks by grant type
+*
 ### 1.2.2
 
 * Added slow query count metric: `signum.postgres.slow_query_count`
