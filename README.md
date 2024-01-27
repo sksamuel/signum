@@ -66,3 +66,5 @@ metrics.bindTo(registry)
 | signum.postgres.slow_query_count               | Shows a count of queries slower than a configurable duration                 |
 | signum.postgres.fillfactor                     | Fillfactor per relation if exists                                            |
 | signum.postgres.autovacuum_vacuum_scale_factor | Autovacuum scale factor per relation if global is overridden on that table   |
+| signum.postgres.autovacuum_freeze_max_age      | Autovacuum freeze max age                                                    |
+| signum.postgres.deadlocks                      | Per database deadlock count                                                  |
