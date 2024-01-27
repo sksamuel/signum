@@ -2,6 +2,7 @@
 
 package com.sksamuel.signum.postgres
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,7 @@ class SettingsMetrics(
    private val interval: Duration?,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/settings.sql").bufferedReader().readText()
 
@@ -45,6 +47,12 @@ class SettingsMetrics(
       val autovacuumScaleFactor = relnameGaugeDouble(
          "signum.postgres.autovacuum_vacuum_scale_factor",
          "Autovacuum scale factor",
+         registry
+      )
+
+      val autovacuumFreezeMaxAge = relnameGaugeDouble(
+         "signum.postgres.autovacuum_freeze_max_age",
+         "Autovacuum freeze max age",
          registry
       )
 
@@ -69,6 +77,9 @@ class SettingsMetrics(
 
                   options["autovacuum_vacuum_scale_factor"]?.toDoubleOrNull()
                      ?.let { autovacuumScaleFactor(relname).set(it) }
+
+                  options["autovacuum_freeze_max_age"]?.toDoubleOrNull()
+                     ?.let { autovacuumFreezeMaxAge(relname).set(it) }
                }
             }
          }
