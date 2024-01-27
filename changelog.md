@@ -3,6 +3,7 @@
 ### 1.2.3
 
 * Added locks by grant type
+* Added counts for queries by wait
 *
 ### 1.2.2
 
