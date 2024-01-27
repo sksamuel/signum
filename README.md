@@ -12,10 +12,12 @@ For release see [changelog](changelog.md)
 #### How to use
 
 * Create a metrics instance
-  from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, `AutoVacuumMetrics`, `QueryMetrics`.
+  from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, `AutoVacuumMetrics`, `QueryMetrics`, `DatabaseMetrics`
   passing in the datasource to use.
 * Specify the table name (wildcards accepted), and specify an interval to re-run (or null for a one time shot).
 * Bind to a Micrometer meter registry.
+
+For example, to output metrics derived from the `TablesMetric` instance you would use the following code:
 
 ```kotlin
 val metrics = TableMetrics(ds, "mytablename", null)
