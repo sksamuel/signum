@@ -2,6 +2,7 @@
 
 package com.sksamuel.signum.postgres
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +23,7 @@ class TupleMetrics(
    private val interval: Duration?,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/tuples.sql").bufferedReader().readText()
 
@@ -82,7 +84,7 @@ class TupleMetrics(
          registry
       )
 
-      suspend fun query() {
+      suspend fun query() = runCatching {
          runInterruptible(Dispatchers.IO) {
             template.query(
                query,
@@ -106,7 +108,7 @@ class TupleMetrics(
                seqTupRead(relname).set(rs.getLong("seq_tup_read"))
             }
          }
-      }
+      }.onFailure { logger.warn(it) { "Error running query" } }
 
       if (interval == null) runBlocking {
          query()

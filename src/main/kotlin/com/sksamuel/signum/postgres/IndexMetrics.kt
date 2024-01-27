@@ -2,6 +2,7 @@
 
 package com.sksamuel.signum.postgres
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,7 @@ class IndexMetrics(
    private val interval: Duration?,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val query = javaClass.getResourceAsStream("/index.sql").bufferedReader().readText()
 
@@ -79,7 +81,7 @@ class IndexMetrics(
                idxScan(index).set(rs.getLong("idx_scan"))
             }
          }
-      }
+      }.onFailure { logger.warn(it) { "Error running query" } }
 
       if (interval == null) {
          runBlocking {

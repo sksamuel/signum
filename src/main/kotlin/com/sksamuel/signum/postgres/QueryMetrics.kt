@@ -2,6 +2,7 @@
 
 package com.sksamuel.signum.postgres
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
@@ -24,6 +25,7 @@ class QueryMetrics(
    private val interval: Duration?,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val slowQueryQuery = javaClass.getResourceAsStream("/slow_query_count.sql").bufferedReader().readText()
       .replace(":::threshold", threshold.inWholeMinutes.toString())
@@ -70,7 +72,7 @@ class QueryMetrics(
                waitGauge(waitEvent, waitEventType).set(count)
             }
          }
-      }
+      }.onFailure { logger.warn(it) { "Error running query" } }
 
       if (interval == null) {
          runBlocking {

@@ -83,7 +83,7 @@ class SettingsMetrics(
                }
             }
          }
-      }
+      }.onFailure { logger.warn(it) { "Error running query" } }
 
       if (interval == null) {
          runBlocking {

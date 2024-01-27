@@ -34,6 +34,7 @@ allprojects {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.3")
     implementation("io.micrometer:micrometer-core:1.12.2")
     implementation("org.springframework:spring-jdbc:6.1.3")
+    implementation("io.github.oshai:kotlin-logging-jvm:5.1.4")
   }
 
   tasks.named<Test>("test") {

@@ -2,6 +2,7 @@
 
 package com.sksamuel.signum.postgres
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.MeterBinder
@@ -28,6 +29,7 @@ class LockMetrics(
    private val interval: Duration?,
 ) : MeterBinder {
 
+   private val logger = KotlinLogging.logger { }
    private val template = NamedParameterJdbcTemplate(ds)
    private val fastPathQuery = javaClass.getResourceAsStream("/fast_path_locks.sql").bufferedReader().readText()
    private val modesQuery = javaClass.getResourceAsStream("/locks_by_type.sql").bufferedReader().readText()
@@ -108,7 +110,7 @@ class LockMetrics(
                grantedGauge(granted, relname).set(count)
             }
          }
-      }
+      }.onFailure { logger.warn(it) { "Error running query" } }
 
       if (interval == null) {
          runBlocking {
