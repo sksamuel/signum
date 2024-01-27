@@ -29,6 +29,28 @@ internal fun relnameGauge(
    }
 }
 
+internal fun databaseGauge(
+   name: String,
+   description: String,
+   registry: MeterRegistry,
+   tags: List<Tag> = emptyList()
+): (String) -> AtomicLong {
+   val gauges = ConcurrentHashMap<String, AtomicLong>()
+   return { datname ->
+      gauges.getOrPut(datname) {
+         AtomicLong(0L).also {
+            Gauge
+               .builder(name) { it }
+               .description(description)
+               .tag("datname", datname)
+               .tags(tags)
+               .strongReference(true)
+               .register(registry)
+         }
+      }
+   }
+}
+
 class SettableDouble : Supplier<Number> {
 
    private var double: Double = 0.0
