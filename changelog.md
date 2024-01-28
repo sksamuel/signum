@@ -3,6 +3,9 @@
 ### 1.2.5
 
 * Added `signum.postgres.relfrozenxid`: Max age of the frozen xid for the main table and toast table
+* Added reloption: `autovacuum_vacuum_threshold`
+* Added reloption: `autovacuum_vacuum_insert_threshold`
+* Added reloption: `autovacuum_vacuum_insert_scale_factor`
 
 ### 1.2.4
 

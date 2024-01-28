@@ -15,7 +15,6 @@ import kotlinx.coroutines.runInterruptible
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import javax.sql.DataSource
-import kotlin.math.roundToLong
 import kotlin.time.Duration
 
 /**
@@ -44,15 +43,33 @@ class SettingsMetrics(
          registry
       )
 
+      val autovacuumFreezeMaxAge = relnameGaugeDouble(
+         "signum.postgres.autovacuum_freeze_max_age",
+         "Autovacuum freeze max age",
+         registry
+      )
+
       val autovacuumScaleFactor = relnameGaugeDouble(
          "signum.postgres.autovacuum_vacuum_scale_factor",
          "Autovacuum scale factor",
          registry
       )
 
-      val autovacuumFreezeMaxAge = relnameGaugeDouble(
-         "signum.postgres.autovacuum_freeze_max_age",
-         "Autovacuum freeze max age",
+      val autovacuumInsertScaleFactor = relnameGaugeDouble(
+         "signum.postgres.autovacuum_vacuum_insert_scale_factor",
+         "Autovacuum insert scale factor",
+         registry
+      )
+
+      val autovacuumVacuumThresholds = relnameGaugeDouble(
+         "signum.postgres.autovacuum_vacuum_threshold",
+         "Autovacuum threshold",
+         registry
+      )
+
+      val autovacuumVacuumInsertThresholds = relnameGaugeDouble(
+         "signum.postgres.autovacuum_vacuum_insert_threshold",
+         "Autovacuum Vacuum Insert Threshold",
          registry
       )
 
@@ -78,8 +95,17 @@ class SettingsMetrics(
                   options["autovacuum_vacuum_scale_factor"]?.toDoubleOrNull()
                      ?.let { autovacuumScaleFactor(relname).set(it) }
 
+                  options["autovacuum_vacuum_insert_scale_factor"]?.toDoubleOrNull()
+                     ?.let { autovacuumInsertScaleFactor(relname).set(it) }
+
                   options["autovacuum_freeze_max_age"]?.toDoubleOrNull()
                      ?.let { autovacuumFreezeMaxAge(relname).set(it) }
+
+                  options["autovacuum_vacuum_threshold"]?.toDoubleOrNull()
+                     ?.let { autovacuumVacuumThresholds(relname).set(it) }
+
+                  options["autovacuum_vacuum_insert_threshold"]?.toDoubleOrNull()
+                     ?.let { autovacuumVacuumInsertThresholds(relname).set(it) }
                }
             }
          }
