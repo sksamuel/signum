@@ -6,6 +6,7 @@
 * Added reloption: `autovacuum_vacuum_threshold`
 * Added reloption: `autovacuum_vacuum_insert_threshold`
 * Added reloption: `autovacuum_vacuum_insert_scale_factor`
+* Fixed query to allow nulls in wait_events
 
 ### 1.2.4
 
