@@ -12,7 +12,7 @@ For release see [changelog](changelog.md)
 #### How to use
 
 * Create a metrics instance
-  from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, `AutoVacuumMetrics`, `QueryMetrics`, `DatabaseMetrics`
+  from: `LockMetrics`, `TableMetrics`, `IndexMetrics`, `TupleMetrics`, `StatioMetrics`, `AutoVacuumMetrics`, `QueryMetrics`, `DatabaseMetrics`, `TransactionMetrics`
   passing in the datasource to use.
 * Specify the table name (wildcards accepted), and specify an interval to re-run (or null for a one time shot).
 * Bind to a Micrometer meter registry.
@@ -68,3 +68,4 @@ metrics.bindTo(registry)
 | signum.postgres.autovacuum_vacuum_scale_factor | Autovacuum scale factor per relation if global is overridden on that table   |
 | signum.postgres.autovacuum_freeze_max_age      | Autovacuum freeze max age                                                    |
 | signum.postgres.deadlocks                      | Per database deadlock count                                                  |
+| signum.postgres.relfrozenxid                   | Per relation max age of the frozen xid                                       |

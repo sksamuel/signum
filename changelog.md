@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.2.5
+
+* Added `signum.postgres.relfrozenxid`: Max age of the frozen xid for the main table and toast table
 
 ### 1.2.4
 
