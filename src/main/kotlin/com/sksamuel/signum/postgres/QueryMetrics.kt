@@ -66,10 +66,11 @@ class QueryMetrics(
             template.query(
                queryByWaits,
             ) { rs ->
-               val waitEvent = rs.getString("wait_event")
-               val waitEventType = rs.getString("wait_event_type")
+               val waitEvent: String? = rs.getString("wait_event")
+               val waitEventType: String? = rs.getString("wait_event_type")
                val count = rs.getLong("count")
-               waitGauge(waitEvent, waitEventType).set(count)
+               if (waitEvent != null && waitEventType != null)
+                  waitGauge(waitEvent, waitEventType).set(count)
             }
          }
       }.onFailure { logger.warn(it) { "Error running query" } }
