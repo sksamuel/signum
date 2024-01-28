@@ -3,5 +3,5 @@ SELECT c.oid::regclass as relname,
 FROM pg_class c
         LEFT JOIN pg_class t ON c.reltoastrelid = t.oid
 WHERE c.relkind IN ('r', 'm')
-  AND c.relname ~ :relanme
-ORDER BY 4 DESC
+  AND c.relname like :relanme
+ORDER BY 2 DESC

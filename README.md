@@ -69,3 +69,4 @@ metrics.bindTo(registry)
 | signum.postgres.autovacuum_freeze_max_age      | Autovacuum freeze max age                                                    |
 | signum.postgres.deadlocks                      | Per database deadlock count                                                  |
 | signum.postgres.relfrozenxid                   | Per relation max age of the frozen xid                                       |
+| signum.postgres.relpages                       | Per relation relpage count                                                   |

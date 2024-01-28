@@ -59,6 +59,12 @@ class TableSizeMetrics(
          registry
       )
 
+      val relpages = relnameGauge(
+         name = "signum.postgres.relpages",
+         description = "The number of relpages for a relation",
+         registry = registry,
+      )
+
       suspend fun query() = runCatching {
          runInterruptible(Dispatchers.IO) {
             template.query(
@@ -71,6 +77,7 @@ class TableSizeMetrics(
                pgRelationSizeVm(relname).set(rs.getLong("pg_relation_size_vm"))
                pgTableSize(relname).set(rs.getLong("pg_table_size"))
                pgTotalRelationSize(relname).set(rs.getLong("pg_total_relation_size"))
+               relpages(relname).set(rs.getLong("relpages"))
             }
          }
       }.onFailure { logger.warn(it) { "Error running query" } }

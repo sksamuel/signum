@@ -1,3 +1,3 @@
 SELECT *
 FROM pg_stat_database
-WHERE datname ~ :databasename
+WHERE datname like :databasename

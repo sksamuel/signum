@@ -1,5 +1,10 @@
 # Changelog
 
+### 1.2.6
+
+* Added `signum.postgres.relpages`: per relation relpage count
+* Fixed use of like in 3 queries.
+
 ### 1.2.5
 
 * Added `signum.postgres.relfrozenxid`: Max age of the frozen xid for the main table and toast table
