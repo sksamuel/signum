@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.2.7
+
+* Exclude `transactionid` and `virtualxid` from lock mode counts
+
 ### 1.2.6
 
 * Added `signum.postgres.relpages`: per relation relpage count
